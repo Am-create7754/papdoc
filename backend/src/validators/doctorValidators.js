@@ -3,6 +3,7 @@ const { z } = require('zod');
 const doctorProfileUpdateSchema = z.object({
   fullName: z.string().trim().min(2).max(100).optional(),
   profilePhoto: z.string().trim().url().max(500).optional(),
+  signatureImage: z.string().trim().url().max(500).optional(),
   specialization: z.string().trim().max(150).optional(),
   qualifications: z.array(z.string().trim().max(150)).optional(),
   medicalRegistrationNumber: z.string().trim().max(100).optional(),

@@ -57,10 +57,19 @@ const handleWhatsappWebhook = asyncHandler(async (req, res) => {
     const entries = req.body?.entry || [];
     for (const entry of entries) {
       for (const change of entry.changes || []) {
-        const messages = change.value?.messages;
-        if (!messages) continue; // ignore statuses/other change types
+        const value = change.value || {};
 
-        for (const msg of messages) {
+        for (const s of value.statuses || []) {
+          await whatsappService.processDeliveryStatus({
+            wamid: s.id,
+            status: s.status,
+            timestamp: s.timestamp,
+            errorCode: s.errors?.[0]?.code,
+            errorMessage: s.errors?.[0]?.title,
+          });
+        }
+
+        for (const msg of value.messages || []) {
           if (msg.type !== 'text') continue; // ignore non-text for this phase
           await whatsappService.processDoctorReply({
             from: msg.from,

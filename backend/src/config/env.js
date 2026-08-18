@@ -36,6 +36,8 @@ const env = {
   metaWebhookVerifyToken: process.env.META_WEBHOOK_VERIFY_TOKEN,
   metaGraphApiVersion: process.env.META_GRAPH_API_VERSION || 'v21.0',
   doctorWhatsappNumber: process.env.DOCTOR_WHATSAPP_NUMBER,
+  metaWhatsappTemplateName: process.env.META_WHATSAPP_CONSULTATION_TEMPLATE || 'new_consultation_alert',
+  metaWhatsappTemplateLanguage: process.env.META_WHATSAPP_TEMPLATE_LANGUAGE || 'en_US',
 };
 
 module.exports = { validateEnv, env };

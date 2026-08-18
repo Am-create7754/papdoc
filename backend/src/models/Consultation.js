@@ -49,6 +49,19 @@ const consultationSchema = new mongoose.Schema(
     doctorWhatsappReplyMessageId: { type: String, index: true, unique: true, sparse: true },
     doctorReply: { type: String, trim: true, maxlength: 4000 },
     doctorRepliedAt: { type: Date },
+
+    whatsappDeliveryStatus: { type: String, enum: ['sent', 'delivered', 'read', 'failed'] },
+    whatsappDeliveredAt: { type: Date },
+    whatsappReadAt: { type: Date },
+    whatsappFailedAt: { type: Date },
+    whatsappFailureCode: { type: String, trim: true },
+    whatsappFailureMessage: { type: String, trim: true, maxlength: 500 },
+
+    prescriptionStatus: { type: String, enum: ['none', 'generated', 'failed'], default: 'none' },
+    prescriptionGeneratedAt: { type: Date },
+    prescriptionPdfFilename: { type: String, trim: true },
+    prescriptionPdfFilenameHi: { type: String, trim: true },
+    prescriptionFailureMessage: { type: String, trim: true, maxlength: 500 },
   },
   { timestamps: true }
 );

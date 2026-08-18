@@ -85,6 +85,9 @@ export default function MyConsultations() {
                     <PaymentStatusBadge status={c.paymentStatus} />
                   </div>
                 </div>
+                {c.prescriptionStatus === 'generated' && (
+                  <p className="text-xs font-medium text-primary-dark mt-2">{t('prescription.available')}</p>
+                )}
               </Card>
             </Link>
           ))}

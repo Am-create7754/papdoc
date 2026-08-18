@@ -1,5 +1,6 @@
 const asyncHandler = require('../utils/asyncHandler');
 const consultationService = require('../services/consultationService');
+const prescriptionService = require('../services/prescriptionService');
 
 const create = asyncHandler(async (req, res) => {
   const consultation = await consultationService.createConsultation(req.user, req.body, req.files);
@@ -39,4 +40,24 @@ const getAttachment = asyncHandler(async (req, res) => {
   res.sendFile(filePath);
 });
 
-module.exports = { create, getMy, getOneForPatient, getAllForDoctor, getOneForDoctor, getAttachment };
+const downloadPrescription = asyncHandler(async (req, res) => {
+  const lang = req.query.lang === 'hi' ? 'hi' : 'en';
+  const { filePath, filename } = await prescriptionService.getPrescriptionFile(
+    req.params.id,
+    { role: req.role, user: req.user },
+    lang
+  );
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(filename)}"`);
+  res.sendFile(filePath);
+});
+
+module.exports = {
+  create,
+  getMy,
+  getOneForPatient,
+  getAllForDoctor,
+  getOneForDoctor,
+  getAttachment,
+  downloadPrescription,
+};

@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { fetchMyDoctorProfile, updateMyDoctorProfile } from '../services/doctorService';
+import {
+  fetchMyDoctorProfile,
+  updateMyDoctorProfile,
+  uploadDoctorSignature,
+  signatureImageUrl,
+} from '../services/doctorService';
 import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
@@ -64,16 +69,20 @@ function toPayload(form) {
 export default function DoctorProfile() {
   const { t } = useTranslation();
   const [form, setForm] = useState(null);
+  const [signatureImage, setSignatureImage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [signatureUploading, setSignatureUploading] = useState(false);
+  const [signatureError, setSignatureError] = useState('');
 
   useEffect(() => {
     (async () => {
       try {
         const profile = await fetchMyDoctorProfile();
         setForm(toFormState(profile));
+        setSignatureImage(profile.signatureImage || null);
       } catch (err) {
         setError(err.response?.data?.message || t('profile.loadError'));
       } finally {
@@ -81,6 +90,22 @@ export default function DoctorProfile() {
       }
     })();
   }, [t]);
+
+  const handleSignatureUpload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setSignatureError('');
+    setSignatureUploading(true);
+    try {
+      const updated = await uploadDoctorSignature(file);
+      setSignatureImage(updated.signatureImage || null);
+    } catch (err) {
+      setSignatureError(err.response?.data?.message || t('profile.signatureUploadError'));
+    } finally {
+      setSignatureUploading(false);
+    }
+  };
 
   const handleChange = (field) => (e) => {
     const value = field === 'videoConsultationEnabled' ? e.target.checked : e.target.value;
@@ -145,6 +170,37 @@ export default function DoctorProfile() {
               onChange={handleChange('yearsOfExperience')}
             />
           </div>
+        </Card>
+
+        <Card className="p-6">
+          <p className="text-sm font-medium text-ink mb-1">{t('profile.signatureImage')}</p>
+          <p className="text-xs text-ink-muted mb-4">{t('profile.signatureImageHint')}</p>
+          <div className="flex items-center gap-4">
+            {signatureImage ? (
+              <img
+                src={signatureImageUrl(signatureImage)}
+                alt={t('profile.signatureImage')}
+                className="h-16 max-w-[180px] object-contain border border-line rounded-control bg-white p-2"
+              />
+            ) : (
+              <div className="h-16 w-[180px] border border-dashed border-line rounded-control flex items-center justify-center text-xs text-ink-muted">
+                {t('profile.noSignature')}
+              </div>
+            )}
+            <label>
+              <span className="inline-flex items-center justify-center rounded-control font-medium transition-colors bg-white text-ink border border-line hover:border-primary/40 hover:bg-surface text-sm px-3.5 py-2 cursor-pointer min-h-[44px]">
+                {signatureUploading ? t('common.loading') : t('profile.uploadSignature')}
+              </span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleSignatureUpload}
+                disabled={signatureUploading}
+                className="hidden"
+              />
+            </label>
+          </div>
+          {signatureError && <p className="text-sm text-danger mt-3">{signatureError}</p>}
         </Card>
 
         <Card className="p-6">

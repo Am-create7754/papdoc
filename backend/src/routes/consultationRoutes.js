@@ -22,5 +22,6 @@ router.get(
   authenticate,
   consultationController.getAttachment
 );
+router.get('/:id/prescription', authenticate, consultationController.downloadPrescription);
 
 module.exports = router;

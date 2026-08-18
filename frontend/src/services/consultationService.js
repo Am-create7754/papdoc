@@ -32,3 +32,11 @@ export async function fetchAttachmentBlob(consultationId, attachmentId) {
   );
   return { blob: data, mimeType: headers['content-type'] };
 }
+
+export async function fetchPrescriptionBlob(consultationId, lang = 'en') {
+  const { data } = await apiClient.get(`/consultations/${consultationId}/prescription`, {
+    params: { lang },
+    responseType: 'blob',
+  });
+  return data;
+}

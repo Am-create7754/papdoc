@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import Landing from '../pages/Landing';
 import PatientLogin from '../pages/auth/PatientLogin';
 import PatientRegister from '../pages/auth/PatientRegister';
 import DoctorLogin from '../pages/auth/DoctorLogin';
@@ -17,7 +18,7 @@ import AppShell from '../components/layout/AppShell';
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login/patient" replace />} />
+      <Route path="/" element={<Landing />} />
       <Route path="/login/patient" element={<PatientLogin />} />
       <Route path="/register/patient" element={<PatientRegister />} />
       <Route path="/login/doctor" element={<DoctorLogin />} />

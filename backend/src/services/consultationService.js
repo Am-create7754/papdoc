@@ -7,8 +7,9 @@ const { UPLOAD_DIR } = require('../middlewares/upload');
 const PATIENT_SUMMARY_FIELDS =
   '_id name email phone dateOfBirth gender location bloodGroup allergies existingMedicalConditions currentMedications emergencyContact';
 
-// WhatsApp message IDs are internal correlation details and are never exposed via the API.
-const HIDDEN_FIELDS = '-whatsappMessageId -doctorWhatsappReplyMessageId';
+// WhatsApp message IDs and the raw prescription filename are internal details never exposed via the API.
+const HIDDEN_FIELDS =
+  '-whatsappMessageId -doctorWhatsappReplyMessageId -prescriptionPdfFilename -prescriptionPdfFilenameHi';
 
 async function createConsultation(patient, data, files = []) {
   const doctor = await Doctor.findOne({ isActive: true });

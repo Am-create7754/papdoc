@@ -6,6 +6,7 @@ import {
   fetchMyConsultationById,
   fetchDoctorConsultationById,
   fetchAttachmentBlob,
+  fetchPrescriptionBlob,
 } from '../services/consultationService';
 import { createPaymentOrder } from '../services/paymentService';
 import { openRazorpayCheckout } from '../utils/razorpayCheckout';
@@ -27,6 +28,9 @@ export default function ConsultationDetail() {
   const [error, setError] = useState('');
   const [paying, setPaying] = useState(false);
   const [paymentError, setPaymentError] = useState('');
+  const [prescriptionBusy, setPrescriptionBusy] = useState('');
+  const [prescriptionError, setPrescriptionError] = useState('');
+  const [prescriptionLang, setPrescriptionLang] = useState('en');
 
   useEffect(() => {
     (async () => {
@@ -88,6 +92,41 @@ export default function ConsultationDetail() {
       setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch {
       setError('Failed to open attachment');
+    }
+  };
+
+  const handleViewPrescription = async () => {
+    setPrescriptionError('');
+    setPrescriptionBusy('view');
+    try {
+      const blob = await fetchPrescriptionBlob(id, prescriptionLang);
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (err) {
+      setPrescriptionError(err.response?.data?.message || t('prescription.loadError'));
+    } finally {
+      setPrescriptionBusy('');
+    }
+  };
+
+  const handleDownloadPrescription = async () => {
+    setPrescriptionError('');
+    setPrescriptionBusy('download');
+    try {
+      const blob = await fetchPrescriptionBlob(id, prescriptionLang);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Healthify-Prescription-${consultation?._id?.slice(-6).toUpperCase() || ''}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (err) {
+      setPrescriptionError(err.response?.data?.message || t('prescription.loadError'));
+    } finally {
+      setPrescriptionBusy('');
     }
   };
 
@@ -205,6 +244,63 @@ export default function ConsultationDetail() {
                   </p>
                 )}
               </div>
+            )}
+
+            {consultation.doctorReply && consultation.prescriptionStatus === 'generated' && (
+              <div className="mb-5 rounded-card border border-line p-4">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div>
+                    <p className="text-sm font-semibold text-ink">{t('prescription.available')}</p>
+                    {consultation.prescriptionGeneratedAt && (
+                      <p className="text-xs text-ink-muted mt-0.5">
+                        {t('prescription.generatedOn', {
+                          date: new Date(consultation.prescriptionGeneratedAt).toLocaleDateString(),
+                        })}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div
+                      className="inline-flex items-center bg-surface border border-line rounded-control p-0.5 text-sm"
+                      role="group"
+                      aria-label={t('prescription.language')}
+                    >
+                      {['en', 'hi'].map((lng) => (
+                        <button
+                          key={lng}
+                          type="button"
+                          onClick={() => setPrescriptionLang(lng)}
+                          aria-pressed={prescriptionLang === lng}
+                          className={`px-2.5 py-1.5 rounded-[8px] font-medium transition-colors min-h-[36px] ${
+                            prescriptionLang === lng ? 'bg-white text-primary-dark shadow-soft' : 'text-ink-muted hover:text-ink'
+                          }`}
+                        >
+                          {lng === 'en' ? 'EN' : 'हि'}
+                        </button>
+                      ))}
+                    </div>
+                    <Button variant="outline" onClick={handleViewPrescription} disabled={!!prescriptionBusy}>
+                      {prescriptionBusy === 'view' ? t('common.loading') : t('prescription.view')}
+                    </Button>
+                    <Button onClick={handleDownloadPrescription} disabled={!!prescriptionBusy}>
+                      {prescriptionBusy === 'download' ? t('common.loading') : t('prescription.download')}
+                    </Button>
+                  </div>
+                </div>
+                {prescriptionError && <p className="text-sm text-danger mt-3">{prescriptionError}</p>}
+              </div>
+            )}
+
+            {consultation.doctorReply && consultation.prescriptionStatus === 'none' && (
+              <p className="text-sm text-ink-muted bg-surface rounded-control p-3.5 mb-5">
+                {t('prescription.preparing')}
+              </p>
+            )}
+
+            {consultation.doctorReply && consultation.prescriptionStatus === 'failed' && (
+              <p className="text-sm text-warning bg-warning-bg rounded-control p-3.5 mb-5">
+                {t('prescription.generationFailed')}
+              </p>
             )}
 
             <div className="space-y-5">

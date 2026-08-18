@@ -188,6 +188,11 @@
     "saveSuccess": "Profile updated",
     "fullName": "Full name",
     "profilePhoto": "Profile photo URL",
+    "signatureImage": "Signature",
+    "signatureImageHint": "Used on generated prescription PDFs, near your name and as the seal mark.",
+    "uploadSignature": "Upload signature",
+    "noSignature": "No signature uploaded",
+    "signatureUploadError": "Failed to upload signature",
     "specialization": "Specialization",
     "medicalRegistrationNumber": "Medical registration number",
     "yearsOfExperience": "Years of experience",
@@ -258,9 +263,151 @@
     "successMessage": "Your payment was received and your consultation has been submitted to your doctor.",
     "paidSummary": "Paid ₹{{amount}} on {{date}}"
   },
+  "prescription": {
+    "available": "Prescription available",
+    "generatedOn": "Generated on {{date}}",
+    "view": "View",
+    "download": "Download PDF",
+    "preparing": "Prescription is being prepared.",
+    "generationFailed": "We couldn't prepare your prescription automatically. Our team has been notified.",
+    "loadError": "Failed to load prescription",
+    "language": "Prescription language"
+  },
   "language": {
     "label": "Language",
     "en": "English",
     "hi": "हिन्दी"
+  },
+  "landing": {
+    "nav": {
+      "howItWorks": "How it works",
+      "doctor": "Your doctor",
+      "prescriptions": "Prescriptions",
+      "security": "Security",
+      "login": "Log in",
+      "patientLogin": "Patient login",
+      "doctorLogin": "Doctor login",
+      "dashboard": "Go to dashboard",
+      "startConsultation": "Start consultation",
+      "register": "Register"
+    },
+    "hero": {
+      "badge": "A trusted doctor, now online",
+      "headline": "Trusted medical care, now closer to you.",
+      "headlineAccent": "closer to you.",
+      "subcopy": "Consult your trusted doctor online, share your symptoms and reports securely, pay digitally, and receive your prescription in your Healthify portal.",
+      "primaryCta": "Start consultation",
+      "secondaryCta": "View doctor profile",
+      "trust1": "Secure consultations",
+      "trust2": "Verified doctor",
+      "trust3": "Digital prescriptions",
+      "cardComplaintLabel": "Chief complaint",
+      "cardComplaintValue": "Fever and body ache",
+      "cardStatusLabel": "Consultation status",
+      "cardPrescriptionLabel": "Prescription",
+      "cardPrescriptionValue": "Ready to download",
+      "cardDoctorNote": "Reviewed personally by your doctor"
+    },
+    "doctor": {
+      "eyebrow": "Your doctor",
+      "title": "The same doctor you already trust — now online.",
+      "subtitle": "Healthify is a digital extension of one doctor's practice, not a marketplace. Every consultation reaches your doctor directly, personally.",
+      "experienceSuffix": "years of experience",
+      "languagesLabel": "Languages",
+      "clinicLabel": "Clinic",
+      "expertiseLabel": "Commonly treated",
+      "regLabel": "Reg. No.",
+      "cta": "Start a consultation",
+      "loadError": "Doctor profile is temporarily unavailable."
+    },
+    "steps": {
+      "eyebrow": "How it works",
+      "title": "Four simple steps",
+      "step1Title": "Tell us what's troubling you",
+      "step1Desc": "Share your symptoms, duration, and any reports or photos securely.",
+      "step2Title": "Pay securely",
+      "step2Desc": "Complete your payment through Razorpay's secure checkout.",
+      "step3Title": "Doctor reviews your consultation",
+      "step3Desc": "Your doctor personally reviews your case and medical history.",
+      "step4Title": "Receive your prescription online",
+      "step4Desc": "Get a digital prescription in your Healthify portal, ready to download."
+    },
+    "benefits": {
+      "eyebrow": "Why Healthify",
+      "title": "Care that fits into your life",
+      "item1Title": "Consult from anywhere",
+      "item1Desc": "No travel, no waiting rooms — talk to your doctor from home.",
+      "item2Title": "Secure medical information",
+      "item2Desc": "Your health details are protected and shared only with your doctor.",
+      "item3Title": "Share reports & photos",
+      "item3Desc": "Attach reports or images directly with your consultation.",
+      "item4Title": "Direct doctor review",
+      "item4Desc": "No queues or triage — your doctor reviews every consultation personally.",
+      "item5Title": "Digital prescription history",
+      "item5Desc": "Every prescription is saved and downloadable anytime.",
+      "item6Title": "English + हिन्दी",
+      "item6Desc": "Use Healthify comfortably in the language you prefer."
+    },
+    "experience": {
+      "eyebrow": "See it in action",
+      "title": "A real look at your Healthify portal",
+      "subtitle": "This is the same interface patients use, not a mockup.",
+      "note": "Illustrative preview of the patient portal.",
+      "step1": "Consultation submitted",
+      "step2": "Payment verified",
+      "step3": "Doctor notified",
+      "step4": "Prescription ready"
+    },
+    "prescription": {
+      "eyebrow": "Digital prescriptions",
+      "title": "Your prescription stays with you.",
+      "desc": "Once your doctor responds, your prescription is generated and saved securely in your Healthify portal — view it anytime or download it as a PDF for the pharmacy or your records.",
+      "point1": "Available in your portal as soon as it's ready",
+      "point2": "Downloadable as a clean, printable PDF",
+      "point3": "Kept in your consultation history",
+      "previewDoctor": "Dr. Your Doctor",
+      "previewAdvice": "Doctor's advice",
+      "previewDownload": "Download PDF"
+    },
+    "access": {
+      "eyebrow": "Access from anywhere",
+      "title": "For when visiting the clinic isn't easy",
+      "desc": "Whether you live outside the city, find travel difficult, or simply need a quick follow-up, Healthify brings your doctor's care to wherever you are.",
+      "point1": "Patients living outside the city",
+      "point2": "Elderly patients and follow-ups",
+      "point3": "Anyone unable to travel easily"
+    },
+    "security": {
+      "eyebrow": "Security & trust",
+      "title": "Your information stays protected",
+      "item1Title": "Secure login",
+      "item1Desc": "Your account is protected with encrypted authentication.",
+      "item2Title": "Protected medical information",
+      "item2Desc": "Your health details are only accessible to you and your doctor.",
+      "item3Title": "Secure payments",
+      "item3Desc": "Payments are processed securely through Razorpay.",
+      "item4Title": "Authenticated prescriptions",
+      "item4Desc": "Only you and your doctor can access your prescriptions."
+    },
+    "emergency": {
+      "title": "Not for medical emergencies",
+      "desc": "Healthify is not intended for medical emergencies. If you are experiencing severe or life-threatening symptoms, please seek immediate emergency medical care."
+    },
+    "finalCta": {
+      "title": "Your doctor is now closer than ever.",
+      "subtitle": "Start a consultation in a few minutes, from wherever you are.",
+      "primaryCta": "Start consultation",
+      "secondaryCta": "Login to Healthify"
+    },
+    "footer": {
+      "tagline": "Your trusted doctor's care, now accessible online.",
+      "navTitle": "Navigate",
+      "legalTitle": "Legal",
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "contact": "Contact",
+      "emergencyNote": "Healthify is not intended for medical emergencies. In an emergency, seek immediate in-person medical care.",
+      "rights": "All rights reserved."
+    }
   }
 }

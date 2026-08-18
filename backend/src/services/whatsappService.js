@@ -1,6 +1,8 @@
 const Consultation = require('../models/Consultation');
 const Patient = require('../models/Patient');
 const { env } = require('../config/env');
+const { consultationReferenceCode } = require('../utils/reference');
+const prescriptionService = require('./prescriptionService');
 
 const TIMEOUT_MS = 10000;
 
@@ -14,56 +16,24 @@ function maskPhone(number) {
   return `${'*'.repeat(digits.length - 3)}${digits.slice(-3)}`;
 }
 
-function calculateAge(dateOfBirth) {
-  if (!dateOfBirth) return null;
-  const diffMs = Date.now() - new Date(dateOfBirth).getTime();
-  return Math.floor(diffMs / (365.25 * 24 * 60 * 60 * 1000));
+// Meta rejects template parameter text containing newlines/tabs or long runs of spaces.
+function sanitizeTemplateParam(value, maxLength = 300) {
+  return String(value ?? '')
+    .replace(/[\n\t]+/g, ' ')
+    .replace(/ {5,}/g, '    ')
+    .trim()
+    .slice(0, maxLength);
 }
 
-function referenceCode(consultation) {
-  return `HF-${consultation._id.toString().slice(-6).toUpperCase()}`;
-}
-
-function buildConsultationMessage(consultation, patient) {
-  const age = calculateAge(patient.dateOfBirth);
-  const lines = [
-    'New Healthify Consultation',
-    '',
-    `Patient: ${patient.name}`,
-    `Age: ${age ?? 'N/A'}`,
-    `Gender: ${patient.gender ? patient.gender[0].toUpperCase() + patient.gender.slice(1) : 'N/A'}`,
-    `Consultation Type: ${consultation.consultationType === 'priority' ? 'Priority' : 'Standard'}`,
-    '',
-    'Chief Complaint:',
+function buildTemplateParameters(consultation, patient) {
+  const consultationTypeLabel = consultation.consultationType === 'priority' ? 'Priority' : 'Standard';
+  return [
+    patient.name,
+    consultationTypeLabel,
     consultation.chiefComplaint,
-    '',
-    'Symptoms:',
-    consultation.symptoms.map((s) => `• ${s}`).join('\n'),
-    '',
-    `Duration: ${consultation.duration}`,
-    '',
-    `Allergies: ${consultation.allergiesSnapshot?.length ? consultation.allergiesSnapshot.join(', ') : 'None reported'}`,
-    `Current Medications: ${
-      consultation.currentMedicationsSnapshot?.length ? consultation.currentMedicationsSnapshot.join(', ') : 'None reported'
-    }`,
-    `Medical Conditions: ${
-      consultation.medicalHistorySnapshot?.length ? consultation.medicalHistorySnapshot.join(', ') : 'None reported'
-    }`,
-  ];
-
-  if (consultation.additionalNotes) {
-    lines.push('', 'Additional Notes:', consultation.additionalNotes);
-  }
-
-  lines.push(
-    '',
-    'Payment: Verified',
-    `Consultation ID: ${referenceCode(consultation)}`,
-    '',
-    'Please reply directly to THIS message with your response/prescription notes.'
-  );
-
-  return lines.join('\n');
+    consultation.duration,
+    consultationReferenceCode(consultation),
+  ].map((value) => ({ type: 'text', text: sanitizeTemplateParam(value) }));
 }
 
 async function callGraphApi(body) {
@@ -128,15 +98,22 @@ async function sendConsultationToDoctor(consultation) {
 
   console.log('WhatsApp send started for consultation:', consultation._id.toString(), 'to', maskPhone(doctorNumber));
 
-  const message = buildConsultationMessage(consultation, patient);
-
   let response;
   try {
     response = await callGraphApi({
       messaging_product: 'whatsapp',
       to: doctorNumber,
-      type: 'text',
-      text: { body: message },
+      type: 'template',
+      template: {
+        name: env.metaWhatsappTemplateName,
+        language: { code: env.metaWhatsappTemplateLanguage },
+        components: [
+          {
+            type: 'body',
+            parameters: buildTemplateParameters(consultation, patient),
+          },
+        ],
+      },
     });
   } catch (err) {
     console.error('WhatsApp send failed for consultation:', consultation._id.toString(), err.message);
@@ -196,12 +173,59 @@ async function processDoctorReply({ from, messageId, text, contextId }) {
     console.log('Doctor reply matched and stored for consultation:', consultation._id.toString());
   } catch (err) {
     console.warn('WhatsApp reply save skipped (likely duplicate):', err.message);
+    return;
+  }
+
+  try {
+    await prescriptionService.generatePrescription(consultation);
+  } catch (err) {
+    console.error('Prescription generation failed for consultation:', consultation._id.toString(), err.message);
+  }
+}
+
+const STATUS_RANK = { sent: 1, delivered: 2, read: 3 };
+
+async function processDeliveryStatus({ wamid, status, timestamp, errorCode, errorMessage }) {
+  if (!wamid || !status) return;
+
+  const consultation = await Consultation.findOne({ whatsappMessageId: wamid });
+  if (!consultation) {
+    console.warn('WhatsApp status ignored — no consultation matches outbound message id');
+    return;
+  }
+
+  const eventTime = timestamp ? new Date(Number(timestamp) * 1000) : new Date();
+
+  if (status === 'failed') {
+    consultation.whatsappDeliveryStatus = 'failed';
+    consultation.whatsappFailedAt = eventTime;
+    consultation.whatsappFailureCode = errorCode != null ? String(errorCode) : undefined;
+    consultation.whatsappFailureMessage = errorMessage ? String(errorMessage).slice(0, 500) : undefined;
+  } else if (STATUS_RANK[status]) {
+    const currentRank = STATUS_RANK[consultation.whatsappDeliveryStatus] || 0;
+    if (STATUS_RANK[status] <= currentRank) {
+      console.log('WhatsApp status ignored — duplicate or stale event for consultation:', consultation._id.toString());
+      return;
+    }
+    consultation.whatsappDeliveryStatus = status;
+    if (status === 'delivered') consultation.whatsappDeliveredAt = eventTime;
+    if (status === 'read') consultation.whatsappReadAt = eventTime;
+  } else {
+    return; // unrecognized status type, ignore safely
+  }
+
+  try {
+    await consultation.save();
+    console.log('WhatsApp status updated for consultation:', consultation._id.toString(), '->', status);
+  } catch (err) {
+    console.warn('WhatsApp status save skipped:', err.message);
   }
 }
 
 module.exports = {
   sendConsultationToDoctor,
   processDoctorReply,
+  processDeliveryStatus,
   normalizePhone,
   maskPhone,
 };

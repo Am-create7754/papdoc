@@ -14,6 +14,7 @@ const doctorSchema = new mongoose.Schema(
     role: { type: String, enum: ['doctor'], default: 'doctor' },
 
     profilePhoto: { type: String, trim: true },
+    signatureImage: { type: String, trim: true },
     specialization: { type: String, trim: true },
     qualifications: { type: [String], default: [] },
     medicalRegistrationNumber: { type: String, trim: true },
