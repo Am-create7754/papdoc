@@ -5,6 +5,7 @@
     "startConsultation": "Consult",
     "consultations": "Consultations",
     "prescriptions": "Prescriptions",
+    "video": "Video",
     "profile": "Profile",
     "overview": "Overview",
     "logout": "Log out"
@@ -126,6 +127,9 @@
     "typeStandardDesc": "Reviewed in the regular queue.",
     "typePriority": "Priority",
     "typePriorityDesc": "Reviewed sooner, ahead of the regular queue.",
+    "typeVideo": "Video consultation",
+    "typeVideoDesc": "A live one-on-one video call with your doctor.",
+    "typeVideoUnavailable": "Not available right now — fully booked or paused for today.",
     "reviewTitle": "Review & submit",
     "reviewSubtitle": "Check everything looks right before submitting.",
     "reviewNotes": "Additional notes",
@@ -278,6 +282,87 @@
     "en": "English",
     "hi": "हिन्दी"
   },
+  "video": {
+    "title": "Video Consultation",
+    "subtitle": "A live one-on-one video call with your doctor.",
+    "doctorFallbackName": "Your doctor",
+    "patientFallbackName": "Patient",
+    "viewConsultation": "View consultation",
+    "status": {
+      "completed": "Video consultation completed.",
+      "cancelled": "This video consultation was cancelled.",
+      "expired": "This video consultation window expired.",
+      "noShow": "This video consultation was marked as a no-show.",
+      "failed": "This video booking couldn't be completed."
+    },
+    "booking": {
+      "title": "Book a video consultation",
+      "subtitle": "Talk to your doctor face-to-face, from wherever you are.",
+      "doctorPaused": "Video consultations are temporarily paused. Please check back later.",
+      "fullyBooked": "Video consultations are fully booked for today.",
+      "fee": "Fee",
+      "remainingToday": "Slots left today",
+      "estimatedWait": "Estimated wait",
+      "cta": "Book a video consultation"
+    },
+    "queue": {
+      "title": "You're in the queue",
+      "next": "You are next.",
+      "position": "You are #{{position}} in queue.",
+      "waitLabel": "Estimated wait",
+      "waitMinutes": "~{{count}} min",
+      "doctorLabel": "Doctor",
+      "referenceLabel": "Reference",
+      "cancelButton": "Cancel this consultation",
+      "cancelError": "Couldn't cancel your consultation. Please try again."
+    },
+    "ready": {
+      "title": "Your consultation is ready",
+      "doctorJoiningSoon": "Your doctor will join shortly.",
+      "inProgress": "Your consultation is in progress.",
+      "joinButton": "Join Video Consultation"
+    },
+    "call": {
+      "permissionDenied": "Camera and microphone access is required for your video consultation.",
+      "noDevice": "No camera or microphone was found on this device.",
+      "deviceBusy": "Your camera or microphone is being used by another app.",
+      "deviceGenericError": "Couldn't access your camera or microphone. Please check your device settings.",
+      "unsupportedBrowser": "This browser doesn't support video calls. Please try Chrome, Edge, or Safari.",
+      "precheckTitle": "Check your camera and microphone",
+      "precheckHint": "Make sure you look and sound good before joining.",
+      "connecting": "Connecting...",
+      "joinButton": "Join call",
+      "joinError": "Couldn't join the video call. Please try again.",
+      "callEnded": "The call has ended.",
+      "reconnecting": "Reconnecting...",
+      "waitingForRemote": "Waiting for {{name}} to join...",
+      "muteMic": "Mute microphone",
+      "unmuteMic": "Unmute microphone",
+      "turnOffCamera": "Turn off camera",
+      "turnOnCamera": "Turn on camera",
+      "endCall": "End session",
+      "leaveCall": "Leave call"
+    },
+    "doctor": {
+      "title": "Video Consultations",
+      "subtitle": "Manage your live video queue.",
+      "available": "Accepting video consultations",
+      "paused": "Video consultations paused",
+      "availabilityError": "Couldn't update your availability. Please try again.",
+      "activeSection": "Active",
+      "callInProgress": "Call in progress",
+      "waitingToJoin": "Waiting for you to join",
+      "markNoShow": "Mark no-show",
+      "joinButton": "Join",
+      "noActiveTitle": "No active consultation",
+      "noActiveDesc": "When a patient is ready, they'll appear here.",
+      "queueSection": "Queue ({{count}})",
+      "emptyQueueTitle": "Queue is empty",
+      "emptyQueueDesc": "Paid video consultations will appear here in order.",
+      "endError": "Couldn't end the session. Please try again.",
+      "noShowError": "Couldn't mark this patient as a no-show. Please try again."
+    }
+  },
   "landing": {
     "nav": {
       "howItWorks": "How it works",
@@ -293,9 +378,10 @@
     },
     "hero": {
       "badge": "A trusted doctor, now online",
-      "headline": "Trusted medical care, now closer to you.",
-      "headlineAccent": "closer to you.",
-      "subcopy": "Consult your trusted doctor online, share your symptoms and reports securely, pay digitally, and receive your prescription in your Healthify portal.",
+      "headline": "Care that feels",
+      "headlineAccent": "personal",
+      "headlineEnd": "not procedural.",
+      "subcopy": "Consult your trusted doctor from home, share your symptoms and reports securely, and receive a digital prescription — reviewed personally, every time.",
       "primaryCta": "Start consultation",
       "secondaryCta": "View doctor profile",
       "trust1": "Secure consultations",
@@ -309,6 +395,7 @@
       "cardDoctorNote": "Reviewed personally by your doctor"
     },
     "doctor": {
+      "voiceQuote": "Age is just a number on a chart—weight and organ health are what truly determine the safe and effective dose of a medication.",
       "eyebrow": "Your doctor",
       "title": "The same doctor you already trust — now online.",
       "subtitle": "Healthify is a digital extension of one doctor's practice, not a marketplace. Every consultation reaches your doctor directly, personally.",

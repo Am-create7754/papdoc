@@ -16,6 +16,7 @@ const patientRoutes = require('./src/routes/patientRoutes');
 const consultationRoutes = require('./src/routes/consultationRoutes');
 const paymentRoutes = require('./src/routes/paymentRoutes');
 const webhookRoutes = require('./src/routes/webhookRoutes');
+const videoRoutes = require('./src/routes/videoRoutes');
 
 async function start() {
   validateEnv();
@@ -24,7 +25,23 @@ async function start() {
   const app = express();
 
   app.use(helmet());
-  app.use(cors({ origin: env.clientOrigin, credentials: true }));
+  // In production this behaves exactly as before: only env.clientOrigin is allowed. In
+  // development it additionally accepts any http://localhost:<port> origin, since Vite's
+  // dev server silently shifts ports (5173 -> 5174 -> ...) whenever something else on the
+  // machine already holds the configured port — a single hardcoded dev origin breaks CORS
+  // (and therefore login) every time that happens.
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        if (!origin || origin === env.clientOrigin) return callback(null, true);
+        if (env.nodeEnv !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) {
+          return callback(null, true);
+        }
+        callback(new Error('Not allowed by CORS'));
+      },
+      credentials: true,
+    })
+  );
   app.use(
     express.json({
       limit: '10kb',
@@ -43,6 +60,7 @@ async function start() {
   app.use('/api/consultations', consultationRoutes);
   app.use('/api/payments', paymentRoutes);
   app.use('/api/webhooks', webhookRoutes);
+  app.use('/api/video', videoRoutes);
 
   app.use((req, res) => {
     res.status(404).json({ success: false, message: 'Route not found' });

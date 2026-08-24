@@ -5,6 +5,7 @@ const razorpay = require('../config/razorpay');
 const { env } = require('../config/env');
 const { verifyHmacSignature } = require('../utils/verifySignature');
 const whatsappService = require('./whatsappService');
+const videoService = require('./videoService');
 
 async function notifyDoctorSafely(consultation) {
   try {
@@ -14,10 +15,26 @@ async function notifyDoctorSafely(consultation) {
   }
 }
 
+// Video consultations never go through the templated/wamid-correlated doctor notification —
+// they get their own queue and operational WhatsApp alert (see videoService/whatsappService).
+async function handlePostPaymentSideEffects(consultation) {
+  if (consultation.consultationType === 'video') {
+    const videoSession = await videoService.createSessionAfterPayment(consultation);
+    return { videoSession };
+  }
+  await notifyDoctorSafely(consultation);
+  return { videoSession: null };
+}
+
 const CURRENCY = 'INR';
 
 function feeForType(doctor, consultationType) {
-  const fee = consultationType === 'priority' ? doctor.priorityConsultationFee : doctor.consultationFee;
+  const fee =
+    consultationType === 'priority'
+      ? doctor.priorityConsultationFee
+      : consultationType === 'video'
+        ? doctor.videoConsultationFee
+        : doctor.consultationFee;
   if (fee == null || typeof fee !== 'number' || !Number.isFinite(fee) || fee <= 0) {
     return null;
   }
@@ -40,6 +57,12 @@ async function createOrder(patient, consultationId) {
   const doctor = await Doctor.findById(consultation.doctorId);
   if (!doctor) {
     throw new ApiError(503, 'Doctor is currently unavailable');
+  }
+
+  if (consultation.consultationType === 'video') {
+    // Advisory only — the authoritative, race-safe capacity check runs atomically when the
+    // VideoSession is actually created after payment verification (see videoService).
+    await videoService.assertBookableForOrder(doctor);
   }
 
   const fee = feeForType(doctor, consultation.consultationType);
@@ -93,11 +116,13 @@ async function verifyPayment(patient, payload) {
 
   if (consultation.paymentStatus === 'paid') {
     if (consultation.razorpayPaymentId === paymentId) {
+      const { videoSession } = await handlePostPaymentSideEffects(consultation); // idempotent — returns existing session
       return {
         consultationId: consultation._id,
         paymentStatus: consultation.paymentStatus,
         paidAt: consultation.paidAt,
         amount: consultation.paymentAmount,
+        videoSession,
       };
     }
     throw new ApiError(409, 'This consultation has already been paid');
@@ -117,13 +142,14 @@ async function verifyPayment(patient, payload) {
   consultation.paidAt = new Date();
   await consultation.save();
 
-  await notifyDoctorSafely(consultation);
+  const { videoSession } = await handlePostPaymentSideEffects(consultation);
 
   return {
     consultationId: consultation._id,
     paymentStatus: consultation.paymentStatus,
     paidAt: consultation.paidAt,
     amount: consultation.paymentAmount,
+    videoSession,
   };
 }
 
@@ -144,7 +170,7 @@ async function reconcileFromWebhook(orderId, paymentId) {
     return;
   }
 
-  await notifyDoctorSafely(consultation);
+  await handlePostPaymentSideEffects(consultation);
 }
 
 module.exports = { createOrder, verifyPayment, reconcileFromWebhook };

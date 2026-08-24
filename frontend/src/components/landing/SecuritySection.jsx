@@ -14,13 +14,13 @@ export default function SecuritySection() {
   const { t } = useTranslation();
 
   return (
-    <section id="security" className="scroll-mt-20 py-16 sm:py-20 lg:py-24 bg-surface">
+    <section id="security" className="scroll-mt-20 py-16 sm:py-20 lg:py-24">
       <ResponsiveContainer>
         <Reveal className="max-w-xl mb-10">
           <p className="text-sm font-semibold text-primary uppercase tracking-wide">
             {t('landing.security.eyebrow')}
           </p>
-          <h2 className="mt-2 text-2xl sm:text-3xl font-semibold text-ink tracking-tight">
+          <h2 className="mt-2 font-display font-bold text-2xl sm:text-3xl text-ink tracking-tight">
             {t('landing.security.title')}
           </h2>
         </Reveal>

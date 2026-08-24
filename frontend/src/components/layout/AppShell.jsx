@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import LanguageSwitcher from '../LanguageSwitcher';
 import ResponsiveContainer from '../ui/ResponsiveContainer';
@@ -10,18 +11,21 @@ import {
   PillIcon,
   UserIcon,
   LogoutIcon,
+  VideoIcon,
 } from './icons';
 
 const NAV = {
   patient: [
     { to: '/patient', label: 'nav.home', icon: HomeIcon, end: true },
     { to: '/patient/consultations/new', label: 'nav.startConsultation', icon: ConsultIcon },
+    { to: '/patient/video', label: 'nav.video', icon: VideoIcon },
     { to: '/patient/consultations', label: 'nav.consultations', icon: HistoryIcon },
     { to: '/patient/prescriptions', label: 'nav.prescriptions', icon: PillIcon },
     { to: '/patient/profile', label: 'nav.profile', icon: UserIcon },
   ],
   doctor: [
     { to: '/doctor', label: 'nav.overview', icon: HomeIcon, end: true },
+    { to: '/doctor/video', label: 'nav.video', icon: VideoIcon },
     { to: '/doctor/consultations', label: 'nav.consultations', icon: HistoryIcon },
     { to: '/doctor/profile', label: 'nav.profile', icon: UserIcon },
   ],
@@ -34,8 +38,8 @@ export default function AppShell({ role }) {
   const displayName = role === 'doctor' ? user?.fullName : user?.name;
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col">
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-line">
+    <div className="min-h-screen bg-canvas flex flex-col">
+      <header className="sticky top-0 z-30 bg-surface/95 backdrop-blur border-b border-line">
         <ResponsiveContainer className="flex items-center justify-between h-16">
           <div className="flex items-center gap-8 min-w-0">
             <span className="text-lg font-semibold text-primary-dark tracking-tight shrink-0">
@@ -48,12 +52,23 @@ export default function AppShell({ role }) {
                   to={item.to}
                   end={item.end}
                   className={({ isActive }) =>
-                    `px-3.5 py-2 rounded-control text-sm font-medium transition-colors ${
-                      isActive ? 'bg-mint text-primary-dark' : 'text-ink-muted hover:text-ink hover:bg-surface'
+                    `relative px-3.5 py-2 rounded-control text-sm font-medium transition-colors ${
+                      isActive ? 'text-primary-dark' : 'text-ink-muted hover:text-ink hover:bg-surface-muted'
                     }`
                   }
                 >
-                  {t(item.label)}
+                  {({ isActive }) => (
+                    <>
+                      {isActive && (
+                        <motion.span
+                          layoutId="desktopActiveTab"
+                          className="absolute inset-0 bg-mint rounded-control"
+                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                      <span className="relative">{t(item.label)}</span>
+                    </>
+                  )}
                 </NavLink>
               ))}
             </nav>
@@ -66,7 +81,7 @@ export default function AppShell({ role }) {
             <button
               onClick={logout}
               aria-label={t('nav.logout')}
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-muted hover:text-danger px-2.5 py-2 rounded-control hover:bg-surface transition-colors min-h-[44px]"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-muted hover:text-danger px-2.5 py-2 rounded-control hover:bg-surface-muted transition-colors min-h-[44px]"
             >
               <LogoutIcon className="w-5 h-5" />
               <span className="hidden sm:inline">{t('nav.logout')}</span>
@@ -84,7 +99,7 @@ export default function AppShell({ role }) {
         </ResponsiveContainer>
       </main>
 
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-line pb-[env(safe-area-inset-bottom)]">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-surface border-t border-line pb-[env(safe-area-inset-bottom)]">
         <div className="grid grid-flow-col auto-cols-fr">
           {items.map((item) => {
             const Icon = item.icon;
@@ -94,13 +109,20 @@ export default function AppShell({ role }) {
                 to={item.to}
                 end={item.end}
                 className={({ isActive }) =>
-                  `flex flex-col items-center justify-center gap-0.5 py-2.5 min-h-[56px] text-[11px] font-medium ${
+                  `relative flex flex-col items-center justify-center gap-0.5 py-2.5 min-h-[56px] text-[11px] font-medium ${
                     isActive ? 'text-primary-dark' : 'text-ink-muted'
                   }`
                 }
               >
                 {({ isActive }) => (
                   <>
+                    {isActive && (
+                      <motion.span
+                        layoutId="mobileActiveTab"
+                        className="absolute top-0 inset-x-4 h-0.5 rounded-full bg-primary-dark"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
                     <Icon className={`w-5 h-5 ${isActive ? 'text-primary-dark' : 'text-ink-muted'}`} />
                     <span className="truncate max-w-[64px]">{t(item.label)}</span>
                   </>

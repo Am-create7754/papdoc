@@ -18,6 +18,11 @@ const FONTS_DIR = path.join(__dirname, '..', 'assets', 'fonts');
 const DEVANAGARI_REGULAR = fs.readFileSync(path.join(FONTS_DIR, 'NotoSansDevanagari-Regular.ttf'));
 const DEVANAGARI_BOLD = fs.readFileSync(path.join(FONTS_DIR, 'NotoSansDevanagari-Bold.ttf'));
 
+// White-on-transparent medical emblem shown top-right of every prescription's header —
+// a fixed brand mark, independent of any doctor's uploaded signature.
+const IMAGES_DIR = path.join(__dirname, '..', 'assets', 'images');
+const DOCTOR_SYMBOL = fs.readFileSync(path.join(IMAGES_DIR, 'doctor-symbol.png'));
+
 const PAGE_W = 595.28;
 const PAGE_H = 841.89;
 const MARGIN = 56;
@@ -108,23 +113,26 @@ function doctorDisplayName(doctor) {
   return /^dr\.?\s/i.test(name) ? name : `Dr. ${name}`;
 }
 
-// First letter of the doctor's actual name (stripping any leading "Dr." already in the profile).
-function doctorInitial(doctor) {
-  const name = doctor.fullName.trim().replace(/^dr\.?\s+/i, '');
-  return (name[0] || 'H').toUpperCase();
+// Two-letter monogram from the doctor's actual name (first + last word), stripping any
+// leading "Dr." already in the profile — e.g. "Alok Kumar Sahay" -> "AS".
+function doctorMonogram(doctor) {
+  const words = doctor.fullName.trim().replace(/^dr\.?\s+/i, '').split(/\s+/).filter(Boolean);
+  if (words.length === 0) return 'H';
+  if (words.length === 1) return words[0][0].toUpperCase();
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 }
 
-// Fallback seal when no real signature/stamp image is available — two concentric
-// rings around the doctor's initial, generated dynamically (no external artwork).
-function drawInitialSeal(doc, initial, { x, y, radius, ring, ink }) {
+// Universal medical mark (ring + rounded cross) drawn dynamically — no external artwork —
+// used as the seal fallback when no signature image is available, and as the watermark.
+function drawMedicalMark(doc, { x, y, radius, color }) {
   doc.save();
-  doc.circle(x, y, radius).lineWidth(1.5).strokeColor(ring).stroke();
-  doc.circle(x, y, radius - 5).lineWidth(0.75).strokeColor(ring).stroke();
-  doc
-    .fillColor(ink)
-    .font('Helvetica-Bold')
-    .fontSize(radius)
-    .text(initial, x - radius, y - radius * 0.72, { width: radius * 2, align: 'center' });
+  doc.circle(x, y, radius).lineWidth(1.5).strokeColor(color).stroke();
+  doc.circle(x, y, radius - 5).lineWidth(0.75).strokeColor(color).stroke();
+  const armThickness = radius * 0.32;
+  const armLength = radius * 0.95;
+  doc.fillColor(color);
+  doc.roundedRect(x - armThickness / 2, y - armLength / 2, armThickness, armLength, armThickness / 2).fill();
+  doc.roundedRect(x - armLength / 2, y - armThickness / 2, armLength, armThickness, armThickness / 2).fill();
   doc.restore();
 }
 
@@ -143,28 +151,23 @@ function drawImageSeal(doc, buffer, { x, y, radius, ring }) {
   return true;
 }
 
-// Faint background monogram — kept very low-opacity so body text stays fully readable.
-function drawWatermark(doc, initial) {
+// Faint background mark — kept very low-opacity and thin-lined so body text stays fully
+// readable even where it overlaps (a solid letterform reads as "hiding" text; a light
+// ring-and-cross mark doesn't).
+function drawWatermark(doc) {
   const cx = PAGE_W / 2;
   const cy = (HEADER_H + FOOTER_TOP) / 2;
-  const r = 145;
+  const r = 110;
   doc.save();
-  doc.opacity(0.045);
-  doc.circle(cx, cy, r).lineWidth(3).strokeColor(PRIMARY).stroke();
-  doc.circle(cx, cy, r - 16).lineWidth(1.5).strokeColor(PRIMARY).stroke();
-  doc
-    .fillColor(PRIMARY)
-    .font('Helvetica-Bold')
-    .fontSize(r * 1.25)
-    .text(initial, cx - r, cy - r * 0.72, { width: r * 2, align: 'center' });
+  doc.opacity(0.06);
+  drawMedicalMark(doc, { x: cx, y: cy, radius: r, color: PRIMARY });
   doc.restore();
-  doc.opacity(1);
 }
 
 async function renderPdf({ doctor, patient, consultation, reference, filePath, lang }) {
   const t = LABELS[lang] || LABELS.en;
   const signatureBuffer = await resolveSignatureBuffer(doctor);
-  const initial = doctorInitial(doctor);
+  const monogram = doctorMonogram(doctor);
 
   const regularFont = lang === 'hi' ? 'Deva' : 'Helvetica';
   const boldFont = lang === 'hi' ? 'Deva-Bold' : 'Helvetica-Bold';
@@ -202,47 +205,64 @@ async function renderPdf({ doctor, patient, consultation, reference, filePath, l
       .join('   |   ');
     if (regLine) doc.font(regularFont).fontSize(9).fillColor(MINT).text(regLine, MARGIN, 76, { width: 360 });
 
-    // Seal, top-right of the header band — the doctor's real stamp/signature if uploaded,
-    // otherwise a dynamically generated monogram from their initial.
-    const sealPos = { x: PAGE_W - MARGIN - 30, y: 59, radius: 30, ring: WHITE, ink: WHITE };
-    const sealDrawn = signatureBuffer ? drawImageSeal(doc, signatureBuffer, sealPos) : false;
-    if (!sealDrawn) drawInitialSeal(doc, initial, sealPos);
+    // Seal, top-right of the header band — always the medical emblem, not the doctor's
+    // signature (the signature belongs at the bottom of the document, next to their name).
+    drawImageSeal(doc, DOCTOR_SYMBOL, { x: PAGE_W - MARGIN - 30, y: 59, radius: 30, ring: WHITE });
 
     // ---- Faint watermark behind the body ----
-    drawWatermark(doc, initial);
+    drawWatermark(doc);
 
     // ---- Patient info card ----
+    // Height is derived from the actual rows/wrapped text present, not a fixed guess —
+    // a long address wraps to multiple lines and must not spill past the card background.
     let y = HEADER_H + 26;
     const hasPhone = !!patient.phone;
     const hasAddress = !!patient.location;
-    const cardH = 60 + (hasPhone ? 24 : 0) + (hasAddress ? 24 : 0);
-    doc.roundedRect(MARGIN, y, CONTENT_W, cardH, 8).fillColor(SURFACE).fill();
-    doc.roundedRect(MARGIN, y, CONTENT_W, cardH, 8).lineWidth(1).strokeColor(LINE).stroke();
 
     const col1 = MARGIN + 20;
     const col2 = MARGIN + CONTENT_W / 2 + 10;
-    const rowY = y + 16;
+    const addressWidth = CONTENT_W - 40;
+    const topPad = 18;
+    const rowSpacing = 36;
+    const labelGap = 12;
+
+    doc.font(regularFont).fontSize(10.5);
+    const addressHeight = hasAddress ? doc.heightOfString(patient.location, { width: addressWidth }) : 0;
+
+    let cursor = topPad + rowSpacing; // past name/date row, at age/gender row
+    const row2Offset = cursor;
+    cursor += rowSpacing; // past age/gender row
+    let phoneOffset = null;
+    let addressOffset = null;
+    if (hasPhone) {
+      phoneOffset = cursor;
+      cursor += rowSpacing;
+    }
+    if (hasAddress) {
+      addressOffset = cursor;
+      cursor += labelGap + addressHeight;
+    }
+    const cardH = cursor + 16;
+
+    doc.roundedRect(MARGIN, y, CONTENT_W, cardH, 8).fillColor(SURFACE).fill();
+    doc.roundedRect(MARGIN, y, CONTENT_W, cardH, 8).lineWidth(1).strokeColor(LINE).stroke();
+
+    const rowY = y + topPad;
 
     function row(x, ry, width, label, value) {
       if (!value) return;
       doc.font(boldFont).fontSize(9).fillColor(MUTED).text(label, x, ry, { width });
-      doc.font(regularFont).fontSize(10.5).fillColor(INK).text(value, x, ry + 12, { width });
+      doc.font(regularFont).fontSize(10.5).fillColor(INK).text(value, x, ry + labelGap, { width });
     }
 
     const genderLabel = patient.gender ? t[patient.gender] || patient.gender : t.na;
     row(col1, rowY, 200, t.patientName, patient.name);
     row(col2, rowY, 190, t.date, new Date().toLocaleDateString());
-    row(col1, rowY + 38, 200, t.ageGender, `${calculateAge(patient.dateOfBirth) ?? t.na} / ${genderLabel}`);
-    row(col2, rowY + 38, 190, t.ref, reference);
+    row(col1, y + row2Offset, 200, t.ageGender, `${calculateAge(patient.dateOfBirth) ?? t.na} / ${genderLabel}`);
+    row(col2, y + row2Offset, 190, t.ref, reference);
 
-    let extraRowY = rowY + 60;
-    if (hasPhone) {
-      row(col1, extraRowY, 200, t.phone, patient.phone);
-      extraRowY += 24;
-    }
-    if (hasAddress) {
-      row(col1, extraRowY, CONTENT_W - 40, t.address, patient.location);
-    }
+    if (hasPhone) row(col1, y + phoneOffset, 200, t.phone, patient.phone);
+    if (hasAddress) row(col1, y + addressOffset, addressWidth, t.address, patient.location);
 
     y += cardH + 22;
 
@@ -264,7 +284,7 @@ async function renderPdf({ doctor, patient, consultation, reference, filePath, l
     y += 22;
 
     // ---- Rx section — the doctor's own reply, verbatim, never altered or parsed ----
-    doc.font('Times-Bold').fontSize(30).fillColor(PRIMARY).text('Rx', MARGIN, y);
+    doc.font('Times-Bold').fontSize(28).fillColor(PRIMARY).text(monogram, MARGIN, y);
     const rxMarkBottom = doc.y;
 
     const rxTextX = MARGIN + 54;

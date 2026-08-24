@@ -272,7 +272,7 @@ export default function ConsultationDetail() {
                           onClick={() => setPrescriptionLang(lng)}
                           aria-pressed={prescriptionLang === lng}
                           className={`px-2.5 py-1.5 rounded-[8px] font-medium transition-colors min-h-[36px] ${
-                            prescriptionLang === lng ? 'bg-white text-primary-dark shadow-soft' : 'text-ink-muted hover:text-ink'
+                            prescriptionLang === lng ? 'bg-surface text-primary-dark shadow-soft' : 'text-ink-muted hover:text-ink'
                           }`}
                         >
                           {lng === 'en' ? 'EN' : 'हि'}

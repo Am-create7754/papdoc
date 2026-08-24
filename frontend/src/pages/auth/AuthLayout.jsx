@@ -5,7 +5,7 @@ export default function AuthLayout({ title, subtitle, children }) {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen flex bg-surface">
+    <div className="min-h-screen flex bg-canvas">
       <div className="hidden lg:flex lg:w-[42%] bg-primary-dark text-white flex-col justify-between p-12 xl:p-16">
         <span className="text-xl font-semibold tracking-tight">{t('app.name')}</span>
         <div>

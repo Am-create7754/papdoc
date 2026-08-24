@@ -1,8 +1,8 @@
 export default function EmptyState({ icon, title, description, action }) {
   return (
-    <div className="bg-white rounded-card border border-line/70 shadow-soft p-10 sm:p-14 text-center">
+    <div className="bg-surface rounded-card border border-line/70 shadow-soft p-10 sm:p-14 text-center">
       {icon && (
-        <div className="mx-auto w-14 h-14 rounded-full bg-mint flex items-center justify-center mb-4 text-primary">
+        <div className="mx-auto w-14 h-14 rounded-full bg-mint flex items-center justify-center mb-4 text-primary-dark">
           {icon}
         </div>
       )}

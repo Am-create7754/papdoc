@@ -12,6 +12,8 @@ import MyConsultations from '../pages/MyConsultations';
 import DoctorConsultations from '../pages/DoctorConsultations';
 import ConsultationDetail from '../pages/ConsultationDetail';
 import Prescriptions from '../pages/Prescriptions';
+import PatientVideo from '../pages/video/PatientVideo';
+import DoctorVideo from '../pages/video/DoctorVideo';
 import ProtectedRoute from './ProtectedRoute';
 import AppShell from '../components/layout/AppShell';
 
@@ -36,6 +38,7 @@ export default function AppRoutes() {
         <Route path="/patient/consultations" element={<MyConsultations />} />
         <Route path="/patient/consultations/:id" element={<ConsultationDetail />} />
         <Route path="/patient/prescriptions" element={<Prescriptions />} />
+        <Route path="/patient/video" element={<PatientVideo />} />
       </Route>
 
       <Route
@@ -49,6 +52,7 @@ export default function AppRoutes() {
         <Route path="/doctor/profile" element={<DoctorProfile />} />
         <Route path="/doctor/consultations" element={<DoctorConsultations />} />
         <Route path="/doctor/consultations/:id" element={<ConsultationDetail />} />
+        <Route path="/doctor/video" element={<DoctorVideo />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

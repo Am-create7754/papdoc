@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ResponsiveContainer from '../ui/ResponsiveContainer';
+import Logo from './Logo';
 import { fetchPublicDoctorProfile } from '../../services/doctorService';
 
 const NAV_LINKS = [
@@ -20,12 +21,15 @@ export default function LandingFooter() {
   }, []);
 
   return (
-    <footer className="border-t border-line bg-white">
-      <ResponsiveContainer className="py-12 sm:py-14">
+    <footer className="relative">
+      {/* A fading hairline instead of a solid border — enough to mark where the footer begins
+          without cutting a hard line across the canvas. */}
+      <div aria-hidden="true" className="h-px bg-gradient-to-r from-transparent via-line/60 to-transparent" />
+      <ResponsiveContainer className="relative py-12 sm:py-14">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
           <div className="lg:col-span-2">
-            <span className="text-lg font-semibold text-ink">{t('app.name')}</span>
-            <p className="mt-2 text-sm text-ink-muted leading-relaxed max-w-xs">{t('landing.footer.tagline')}</p>
+            <Logo />
+            <p className="mt-3 text-sm text-ink-muted leading-relaxed max-w-xs">{t('landing.footer.tagline')}</p>
             {doctor && (
               <p className="mt-4 text-sm text-ink-muted">
                 {doctor.fullName}

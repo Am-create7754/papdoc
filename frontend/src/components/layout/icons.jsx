@@ -175,6 +175,62 @@ export function MenuIcon({ className }) {
   );
 }
 
+export function MicIcon({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <rect x="9" y="3.5" width="6" height="11" rx="3" />
+      <path d="M6 11a6 6 0 0012 0M12 17v3.5M9 20.5h6" />
+    </svg>
+  );
+}
+
+export function MicOffIcon({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <path d="M4 4l16 16" />
+      <path d="M15 9.5V6.5a3 3 0 00-5.7-1.3M9 9v2a3 3 0 004.6 2.5M6 11a6 6 0 008.5 5.5" />
+      <path d="M12 17v3.5M9 20.5h6" />
+    </svg>
+  );
+}
+
+export function CameraIcon({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <rect x="3.5" y="7" width="12" height="10" rx="2.5" />
+      <path d="M15.5 10.8l5-3v8.4l-5-3" />
+    </svg>
+  );
+}
+
+export function CameraOffIcon({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <path d="M4 4l16 16" />
+      <path d="M15.5 10.8l5-3v8.4l-5-3M3.5 9v8a2.5 2.5 0 002.5 2.5h6a2.5 2.5 0 001.6-.6M15.5 9.5V9a2.5 2.5 0 00-2.5-2.5H6" />
+    </svg>
+  );
+}
+
+export function PhoneOffIcon({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <path d="M4 4l16 16" />
+      <path d="M5 8.5c1-1.3 2.2-2.4 3.6-3.2l2.1 3.4a1 1 0 01-.3 1.3l-1.4 1a11.3 11.3 0 004.6 4.6l1-1.4a1 1 0 011.3-.3l3.4 2.1a13.6 13.6 0 01-3.2 3.6" />
+    </svg>
+  );
+}
+
+export function UsersIcon({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <circle cx="9" cy="8.5" r="3" />
+      <path d="M3.5 20a5.5 5.5 0 0111 0" />
+      <path d="M15.5 6.2a3 3 0 010 5.6M17.5 20a5.5 5.5 0 00-3.8-6.7" />
+    </svg>
+  );
+}
+
 export function CloseIcon({ className }) {
   return (
     <svg viewBox="0 0 24 24" className={className} {...base}>

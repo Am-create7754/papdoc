@@ -38,6 +38,16 @@ const env = {
   doctorWhatsappNumber: process.env.DOCTOR_WHATSAPP_NUMBER,
   metaWhatsappTemplateName: process.env.META_WHATSAPP_CONSULTATION_TEMPLATE || 'new_consultation_alert',
   metaWhatsappTemplateLanguage: process.env.META_WHATSAPP_TEMPLATE_LANGUAGE || 'en_US',
+
+  twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,
+  twilioApiKeySid: process.env.TWILIO_API_KEY_SID,
+  twilioApiKeySecret: process.env.TWILIO_API_KEY_SECRET,
+  twilioVideoRoomType: process.env.TWILIO_VIDEO_ROOM_TYPE || 'group-small',
+
+  videoMaxDailyConsultations: Number(process.env.VIDEO_MAX_DAILY_CONSULTATIONS) || 10,
+  videoDefaultSessionMinutes: Number(process.env.VIDEO_DEFAULT_SESSION_MINUTES) || 10,
+  videoDoctorJoinGraceMinutes: Number(process.env.VIDEO_DOCTOR_JOIN_GRACE_MINUTES) || 3,
+  videoPatientJoinTimeoutMinutes: Number(process.env.VIDEO_PATIENT_JOIN_TIMEOUT_MINUTES) || 5,
 };
 
 module.exports = { validateEnv, env };

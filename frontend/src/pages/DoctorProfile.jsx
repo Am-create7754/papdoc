@@ -180,7 +180,7 @@ export default function DoctorProfile() {
               <img
                 src={signatureImageUrl(signatureImage)}
                 alt={t('profile.signatureImage')}
-                className="h-16 max-w-[180px] object-contain border border-line rounded-control bg-white p-2"
+                className="h-16 max-w-[180px] object-contain border border-line rounded-control bg-surface p-2"
               />
             ) : (
               <div className="h-16 w-[180px] border border-dashed border-line rounded-control flex items-center justify-center text-xs text-ink-muted">
@@ -188,7 +188,7 @@ export default function DoctorProfile() {
               </div>
             )}
             <label>
-              <span className="inline-flex items-center justify-center rounded-control font-medium transition-colors bg-white text-ink border border-line hover:border-primary/40 hover:bg-surface text-sm px-3.5 py-2 cursor-pointer min-h-[44px]">
+              <span className="inline-flex items-center justify-center rounded-control font-medium transition-colors bg-surface text-ink border border-line hover:border-primary/40 hover:bg-surface-muted text-sm px-3.5 py-2 cursor-pointer min-h-[44px]">
                 {signatureUploading ? t('common.loading') : t('profile.uploadSignature')}
               </span>
               <input

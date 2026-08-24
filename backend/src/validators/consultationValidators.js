@@ -15,7 +15,7 @@ const createConsultationSchema = z.object({
     .refine((arr) => arr.length > 0, 'Please list at least one symptom'),
   duration: z.string().trim().min(1, 'Please specify how long this has been going on').max(100),
   additionalNotes: z.string().trim().max(2000).optional().or(z.literal('')),
-  consultationType: z.enum(['standard', 'priority']),
+  consultationType: z.enum(['standard', 'priority', 'video']),
 });
 
 module.exports = { createConsultationSchema };

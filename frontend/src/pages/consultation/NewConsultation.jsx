@@ -5,12 +5,14 @@ import { fetchMyPatientProfile } from '../../services/patientService';
 import { fetchPublicDoctorProfile } from '../../services/doctorService';
 import { createConsultation } from '../../services/consultationService';
 import { createPaymentOrder } from '../../services/paymentService';
+import { fetchVideoAvailability } from '../../services/videoService';
 import { openRazorpayCheckout } from '../../utils/razorpayCheckout';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Textarea from '../../components/ui/Textarea';
 
 const STEP_KEYS = ['complaint', 'symptoms', 'context', 'attachments', 'type', 'review'];
+const TYPE_LABEL_KEY = { priority: 'Priority', video: 'Video', standard: 'Standard' };
 const MAX_FILES = 5;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
@@ -21,6 +23,7 @@ export default function NewConsultation() {
   const [step, setStep] = useState(0);
   const [profile, setProfile] = useState(null);
   const [doctor, setDoctor] = useState(null);
+  const [videoAvailability, setVideoAvailability] = useState(null);
   const [loadingContext, setLoadingContext] = useState(true);
 
   const [chiefComplaint, setChiefComplaint] = useState('');
@@ -47,12 +50,14 @@ export default function NewConsultation() {
   useEffect(() => {
     (async () => {
       try {
-        const [p, d] = await Promise.all([
+        const [p, d, v] = await Promise.all([
           fetchMyPatientProfile(),
           fetchPublicDoctorProfile().catch(() => null),
+          fetchVideoAvailability().catch(() => null),
         ]);
         setProfile(p);
         setDoctor(d);
+        setVideoAvailability(v);
       } finally {
         setLoadingContext(false);
       }
@@ -147,10 +152,14 @@ export default function NewConsultation() {
         openRazorpayCheckout({
           order,
           name: t('app.name'),
-          description: t(`consultation.type${order.consultationType === 'priority' ? 'Priority' : 'Standard'}`),
+          description: t(`consultation.type${TYPE_LABEL_KEY[order.consultationType] || 'Standard'}`),
           prefill: { name: profile?.name, email: profile?.email, contact: profile?.phone },
           onSuccess: () => {
-            setSuccess(true);
+            if (consultationType === 'video') {
+              navigate('/patient/video');
+            } else {
+              setSuccess(true);
+            }
             resolve();
           },
           onError: (err, reason) => {
@@ -226,7 +235,14 @@ export default function NewConsultation() {
         {step === 3 && (
           <StepAttachments files={files} onSelect={handleFileSelect} onRemove={removeFile} error={errors.files} />
         )}
-        {step === 4 && <StepType value={consultationType} onChange={setConsultationType} doctor={doctor} />}
+        {step === 4 && (
+          <StepType
+            value={consultationType}
+            onChange={setConsultationType}
+            doctor={doctor}
+            videoAvailability={videoAvailability}
+          />
+        )}
         {step === 5 && (
           <StepReview
             chiefComplaint={chiefComplaint}
@@ -384,8 +400,8 @@ function StepSymptoms({
               onClick={() => setDuration(preset)}
               className={`px-3 py-1.5 text-sm rounded-control border transition-colors min-h-[38px] ${
                 duration === preset
-                  ? 'bg-primary text-white border-primary'
-                  : 'bg-white text-ink-muted border-line hover:border-primary/40'
+                  ? 'bg-primary-dark text-white border-primary-dark'
+                  : 'bg-surface text-ink-muted border-line hover:border-primary/40'
               }`}
             >
               {preset}
@@ -501,7 +517,7 @@ function StepAttachments({ files, onSelect, onRemove, error }) {
   );
 }
 
-function StepType({ value, onChange, doctor }) {
+function StepType({ value, onChange, doctor, videoAvailability }) {
   const { t } = useTranslation();
   const options = [
     {
@@ -518,6 +534,18 @@ function StepType({ value, onChange, doctor }) {
     },
   ];
 
+  const videoEnabled = !!doctor?.videoConsultationEnabled;
+  const videoBookable = videoEnabled && videoAvailability?.availableToday;
+  if (videoEnabled) {
+    options.push({
+      id: 'video',
+      title: t('consultation.typeVideo'),
+      description: videoBookable ? t('consultation.typeVideoDesc') : t('consultation.typeVideoUnavailable'),
+      fee: doctor?.videoConsultationFee,
+      disabled: !videoBookable,
+    });
+  }
+
   return (
     <div>
       <h2 className="text-lg font-semibold text-ink">{t('consultation.typeTitle')}</h2>
@@ -527,8 +555,9 @@ function StepType({ value, onChange, doctor }) {
           <button
             key={opt.id}
             type="button"
+            disabled={opt.disabled}
             onClick={() => onChange(opt.id)}
-            className={`text-left rounded-card border p-4 transition-colors ${
+            className={`text-left rounded-card border p-4 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
               value === opt.id ? 'border-primary ring-2 ring-primary/15 bg-mint/40' : 'border-line hover:border-primary/30'
             }`}
           >
@@ -544,7 +573,12 @@ function StepType({ value, onChange, doctor }) {
 
 function StepReview({ chiefComplaint, symptoms, duration, additionalNotes, files, consultationType, onEdit, doctor }) {
   const { t } = useTranslation();
-  const fee = consultationType === 'priority' ? doctor?.priorityConsultationFee : doctor?.consultationFee;
+  const fee =
+    consultationType === 'priority'
+      ? doctor?.priorityConsultationFee
+      : consultationType === 'video'
+        ? doctor?.videoConsultationFee
+        : doctor?.consultationFee;
   const sections = [
     {
       title: t('consultation.steps.complaint'),

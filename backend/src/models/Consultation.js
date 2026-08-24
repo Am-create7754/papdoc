@@ -24,7 +24,7 @@ const consultationSchema = new mongoose.Schema(
     currentMedicationsSnapshot: { type: [String], default: [] },
     allergiesSnapshot: { type: [String], default: [] },
 
-    consultationType: { type: String, enum: ['standard', 'priority'], default: 'standard' },
+    consultationType: { type: String, enum: ['standard', 'priority', 'video'], default: 'standard' },
     attachments: { type: [attachmentSchema], default: [] },
 
     status: {

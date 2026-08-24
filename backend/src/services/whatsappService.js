@@ -222,10 +222,43 @@ async function processDeliveryStatus({ wamid, status, timestamp, errorCode, erro
   }
 }
 
+// Video consultation alerts are operational-only free-text messages to the doctor — deliberately
+// separate from sendConsultationToDoctor's templated, wamid-correlated flow above. They never
+// set/read whatsappMessageId on a Consultation, so a doctor's WhatsApp reply to one of these can
+// never be mistaken for a consultation reply and trigger prescription generation. Note: Meta only
+// allows free-text delivery within the 24h customer-service window after the doctor last messaged
+// in; outside that window this silently fails to send, which is acceptable since it's a
+// best-effort operational nudge and the in-app doctor dashboard is the source of truth.
+async function sendVideoOperationalAlert(text) {
+  if (!env.metaWhatsappAccessToken || !env.metaWhatsappPhoneNumberId) {
+    console.error('Video WhatsApp alert skipped — Meta credentials not configured');
+    return;
+  }
+
+  const doctorNumber = normalizePhone(env.doctorWhatsappNumber);
+  if (!doctorNumber || doctorNumber.length < 8) {
+    console.error('Video WhatsApp alert skipped — DOCTOR_WHATSAPP_NUMBER is missing or invalid');
+    return;
+  }
+
+  try {
+    await callGraphApi({
+      messaging_product: 'whatsapp',
+      to: doctorNumber,
+      type: 'text',
+      text: { body: sanitizeTemplateParam(text, 500) },
+    });
+    console.log('Video WhatsApp alert sent to', maskPhone(doctorNumber));
+  } catch (err) {
+    console.error('Video WhatsApp alert failed:', err.message);
+  }
+}
+
 module.exports = {
   sendConsultationToDoctor,
   processDoctorReply,
   processDeliveryStatus,
+  sendVideoOperationalAlert,
   normalizePhone,
   maskPhone,
 };

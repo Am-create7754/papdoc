@@ -17,10 +17,14 @@ export default function AccessAnywhereSection() {
       <ResponsiveContainer>
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <Reveal className="order-2 lg:order-1">
-            <div className="rounded-card bg-primary-dark p-8 sm:p-10 text-white relative overflow-hidden">
+            <div className="rounded-card bg-gradient-to-br from-primary-dark via-primary-dark to-[#3D2F14] p-8 sm:p-10 text-white relative overflow-hidden">
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-white/5"
+                className="pointer-events-none absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-mint/10 blur-2xl"
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -top-20 -right-10 w-56 h-56 rounded-full bg-white/5"
               />
               <div className="relative space-y-5">
                 {points.map((p) => {
@@ -42,7 +46,7 @@ export default function AccessAnywhereSection() {
             <p className="text-sm font-semibold text-primary uppercase tracking-wide">
               {t('landing.access.eyebrow')}
             </p>
-            <h2 className="mt-2 text-2xl sm:text-3xl font-semibold text-ink tracking-tight">
+            <h2 className="mt-2 font-display font-bold text-2xl sm:text-3xl text-ink tracking-tight">
               {t('landing.access.title')}
             </h2>
             <p className="mt-3 text-ink-muted text-[15px] leading-relaxed max-w-md">{t('landing.access.desc')}</p>

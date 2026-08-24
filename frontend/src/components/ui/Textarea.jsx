@@ -16,7 +16,7 @@ const Textarea = forwardRef(function Textarea(
         ref={ref}
         id={inputId}
         rows={rows}
-        className={`w-full rounded-control border px-3.5 py-3 text-[15px] text-ink placeholder:text-ink-muted/70 bg-white transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-y ${
+        className={`w-full rounded-control border px-3.5 py-3 text-[15px] text-ink placeholder:text-ink-muted/70 bg-surface transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-y ${
           error ? 'border-danger' : 'border-line'
         }`}
         aria-invalid={!!error}

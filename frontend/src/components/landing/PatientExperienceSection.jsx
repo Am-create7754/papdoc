@@ -19,14 +19,16 @@ export default function PatientExperienceSection() {
   return (
     <section className="py-16 sm:py-20 lg:py-24">
       <ResponsiveContainer>
-        <Reveal className="max-w-xl mb-10 lg:mb-14">
+        <Reveal className="max-w-xl mb-1">
           <p className="text-sm font-semibold text-primary uppercase tracking-wide">
             {t('landing.experience.eyebrow')}
           </p>
-          <h2 className="mt-2 text-2xl sm:text-3xl font-semibold text-ink tracking-tight">
+          <h2 className="mt-2 font-display font-bold text-2xl sm:text-3xl text-ink tracking-tight">
             {t('landing.experience.title')}
           </h2>
-          <p className="mt-3 text-ink-muted text-[15px] leading-relaxed">{t('landing.experience.subtitle')}</p>
+        </Reveal>
+        <Reveal delay={90} className="max-w-xl mb-10 lg:mb-14">
+          <p className="text-ink-muted text-[15px] leading-relaxed">{t('landing.experience.subtitle')}</p>
         </Reveal>
 
         <Reveal delay={100}>

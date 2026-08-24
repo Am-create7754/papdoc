@@ -17,13 +17,13 @@ export default function BenefitsSection() {
   const { t } = useTranslation();
 
   return (
-    <section className="py-16 sm:py-20 lg:py-24 bg-surface">
+    <section className="py-16 sm:py-20 lg:py-24">
       <ResponsiveContainer>
         <Reveal className="max-w-xl mb-10 lg:mb-14">
           <p className="text-sm font-semibold text-primary uppercase tracking-wide">
             {t('landing.benefits.eyebrow')}
           </p>
-          <h2 className="mt-2 text-2xl sm:text-3xl font-semibold text-ink tracking-tight">
+          <h2 className="mt-2 font-display font-bold text-2xl sm:text-3xl text-ink tracking-tight">
             {t('landing.benefits.title')}
           </h2>
         </Reveal>
@@ -33,7 +33,7 @@ export default function BenefitsSection() {
             const Icon = item.icon;
             return (
               <Reveal key={item.titleKey} delay={i * 60}>
-                <Card className="p-5 sm:p-6 h-full hover:border-primary/25 transition-colors">
+                <Card className="p-5 sm:p-6 h-full backdrop-blur-sm hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_16px_40px_-14px_rgba(0,0,0,0.6),0_0_24px_-8px_rgba(200,155,60,0.3)] transition-all duration-300">
                   <div className="w-10 h-10 rounded-control bg-mint flex items-center justify-center text-primary-dark">
                     <Icon className="w-5 h-5" />
                   </div>

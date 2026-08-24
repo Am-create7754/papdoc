@@ -1,36 +1,47 @@
+function withOpacity(varName) {
+  return ({ opacityValue }) =>
+    opacityValue === undefined ? `rgb(var(${varName}))` : `rgb(var(${varName}) / ${opacityValue})`;
+}
+
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
       colors: {
+        canvas: withOpacity('--color-canvas'),
+        surface: {
+          DEFAULT: withOpacity('--color-surface'),
+          muted: withOpacity('--color-surface-muted'),
+        },
         primary: {
-          DEFAULT: '#0F766E',
-          dark: '#115E59',
-          light: '#14B8A6',
+          DEFAULT: withOpacity('--color-primary'),
+          dark: withOpacity('--color-primary-dark'),
+          light: withOpacity('--color-primary-light'),
         },
-        mint: '#DFF5EF',
-        surface: '#F7FAF9',
+        mint: withOpacity('--color-mint'),
         ink: {
-          DEFAULT: '#1F2937',
-          muted: '#64748B',
+          DEFAULT: withOpacity('--color-ink'),
+          muted: withOpacity('--color-ink-muted'),
         },
-        line: '#E5E7EB',
+        line: withOpacity('--color-line'),
         success: {
-          DEFAULT: '#16A34A',
-          bg: '#DCFCE7',
+          DEFAULT: withOpacity('--color-success'),
+          bg: withOpacity('--color-success-bg'),
         },
         warning: {
-          DEFAULT: '#B45309',
-          bg: '#FEF3C7',
+          DEFAULT: withOpacity('--color-warning'),
+          bg: withOpacity('--color-warning-bg'),
         },
         danger: {
-          DEFAULT: '#DC2626',
-          bg: '#FEE2E2',
+          DEFAULT: withOpacity('--color-danger'),
+          bg: withOpacity('--color-danger-bg'),
         },
       },
       fontFamily: {
         sans: [
+          'Manrope',
           'ui-sans-serif',
           'system-ui',
           '-apple-system',
@@ -40,6 +51,8 @@ export default {
           'Arial',
           'sans-serif',
         ],
+        display: ['Syne', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        quote: ['Fraunces', 'Georgia', 'Times New Roman', 'serif'],
       },
       borderRadius: {
         card: '16px',

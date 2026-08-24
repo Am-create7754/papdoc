@@ -1,34 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 
 export default function Reveal({ as: Tag = 'div', delay = 0, className = '', children }) {
-  const ref = useRef(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.15 }
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
+  const MotionTag = motion[Tag] || motion.div;
 
   return (
-    <Tag
-      ref={ref}
-      style={{ transitionDelay: visible ? `${delay}ms` : '0ms' }}
-      className={`transition-all duration-700 ease-out ${
-        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-      } ${className}`}
+    <MotionTag
+      className={className}
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.15 }}
+      transition={{ duration: 0.6, delay: delay / 1000, ease: 'easeOut' }}
     >
       {children}
-    </Tag>
+    </MotionTag>
   );
 }

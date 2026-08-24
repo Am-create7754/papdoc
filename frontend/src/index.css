@@ -3,17 +3,78 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --color-canvas: 247 250 249;
+    --color-surface: 255 255 255;
+    --color-surface-muted: 241 245 244;
+    --color-line: 229 231 235;
+    --color-ink: 31 41 55;
+    --color-ink-muted: 100 116 139;
+    --color-primary: 15 118 110;
+    --color-primary-dark: 17 94 89;
+    --color-primary-light: 20 184 166;
+    --color-mint: 223 245 239;
+    --color-success: 22 163 74;
+    --color-success-bg: 220 252 231;
+    --color-warning: 180 83 9;
+    --color-warning-bg: 254 243 199;
+    --color-danger: 220 38 38;
+    --color-danger-bg: 254 226 226;
+  }
+
+  /* Black + gold, editorial pass — warm near-black surfaces (no blue undertone) with a
+     three-tier gold accent family, matched to the approved COSO/Dublin-Ranch-inspired
+     prototype. `primary` is the mid gold used for standalone text/icons/borders/focus rings.
+     `primary-dark` is a deep bronze-black — dark enough to host ivory text as a solid panel
+     fill AND to read as text on a bright gold chip, both at once. `primary-light` is the
+     bright champagne highlight (hover states, gradient emphasis). `mint` is a richer warm
+     gold reserved for solid chip/badge fills (the "gold seal" look), distinct from the
+     brighter standalone `primary`. `warning` stays shifted toward copper/terracotta so status
+     badges are never mistaken for the gold brand accent. */
+  .dark {
+    --color-canvas: 13 11 8;
+    --color-surface: 26 22 17;
+    --color-surface-muted: 34 28 20;
+    --color-line: 58 47 30;
+    --color-ink: 241 233 216;
+    --color-ink-muted: 169 156 135;
+    --color-primary: 200 155 60;
+    --color-primary-dark: 26 20 12;
+    --color-primary-light: 233 201 120;
+    --color-mint: 217 179 84;
+    --color-success: 74 222 128;
+    --color-success-bg: 20 83 45;
+    --color-warning: 232 140 77;
+    --color-warning-bg: 74 42 20;
+    --color-danger: 248 113 113;
+    --color-danger-bg: 127 29 29;
+  }
+
   html {
     scroll-behavior: smooth;
+    color-scheme: dark;
   }
 
   body {
-    @apply bg-surface text-ink font-sans antialiased;
+    @apply bg-canvas text-ink font-sans antialiased;
     font-size: 16px;
+    position: relative;
+  }
+
+  /* A whisper of grain — the difference between "flat dark" and "deep textured tone." */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 200;
+    opacity: 0.05;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
   }
 
   :focus-visible {
-    outline: 2px solid #0f766e;
+    outline: 2px solid rgb(var(--color-primary));
     outline-offset: 2px;
   }
 }

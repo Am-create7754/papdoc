@@ -15,7 +15,7 @@ const Select = forwardRef(function Select(
       <select
         ref={ref}
         id={inputId}
-        className={`w-full rounded-control border px-3.5 py-2.5 text-[15px] text-ink bg-white transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary ${
+        className={`w-full rounded-control border px-3.5 py-2.5 text-[15px] text-ink bg-surface transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary ${
           error ? 'border-danger' : 'border-line'
         }`}
         aria-invalid={!!error}
