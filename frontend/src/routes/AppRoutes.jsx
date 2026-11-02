@@ -1,4 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { VIDEO_CONSULTATIONS_LIVE } from '../constants/features';
+import { VideoComingSoon } from '../components/ComingSoon';
 import Landing from '../pages/Landing';
 import PatientLogin from '../pages/auth/PatientLogin';
 import PatientRegister from '../pages/auth/PatientRegister';
@@ -38,7 +40,10 @@ export default function AppRoutes() {
         <Route path="/patient/consultations" element={<MyConsultations />} />
         <Route path="/patient/consultations/:id" element={<ConsultationDetail />} />
         <Route path="/patient/prescriptions" element={<Prescriptions />} />
-        <Route path="/patient/video" element={<PatientVideo />} />
+        <Route
+          path="/patient/video"
+          element={VIDEO_CONSULTATIONS_LIVE ? <PatientVideo /> : <VideoComingSoon role="patient" />}
+        />
       </Route>
 
       <Route
@@ -52,7 +57,10 @@ export default function AppRoutes() {
         <Route path="/doctor/profile" element={<DoctorProfile />} />
         <Route path="/doctor/consultations" element={<DoctorConsultations />} />
         <Route path="/doctor/consultations/:id" element={<ConsultationDetail />} />
-        <Route path="/doctor/video" element={<DoctorVideo />} />
+        <Route
+          path="/doctor/video"
+          element={VIDEO_CONSULTATIONS_LIVE ? <DoctorVideo /> : <VideoComingSoon role="doctor" />}
+        />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

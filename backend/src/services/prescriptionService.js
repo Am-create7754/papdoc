@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { env } = require('../config/env');
 const path = require('path');
 const crypto = require('crypto');
 const PDFDocument = require('pdfkit');
@@ -9,7 +10,7 @@ const ApiError = require('../utils/ApiError');
 const { consultationReferenceCode } = require('../utils/reference');
 const { SIGNATURE_DIR } = require('../middlewares/signatureUpload');
 
-const PRESCRIPTION_DIR = path.join(__dirname, '..', '..', 'uploads', 'prescriptions');
+const PRESCRIPTION_DIR = path.join(env.uploadsDir, 'prescriptions');
 fs.mkdirSync(PRESCRIPTION_DIR, { recursive: true });
 
 // Noto Sans Devanagari (SIL Open Font License) — the standard PDF base fonts have no

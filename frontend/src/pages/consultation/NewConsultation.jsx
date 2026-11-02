@@ -1,15 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { VIDEO_CONSULTATIONS_LIVE } from '../../constants/features';
+import { ComingSoonBadge } from '../../components/ComingSoon';
 import { fetchMyPatientProfile } from '../../services/patientService';
 import { fetchPublicDoctorProfile } from '../../services/doctorService';
-import { createConsultation } from '../../services/consultationService';
+import { createConsultation, precheckConsultationInput } from '../../services/consultationService';
 import { createPaymentOrder } from '../../services/paymentService';
 import { fetchVideoAvailability } from '../../services/videoService';
 import { openRazorpayCheckout } from '../../utils/razorpayCheckout';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Textarea from '../../components/ui/Textarea';
+import { AlertIcon } from '../../components/layout/icons';
 
 const STEP_KEYS = ['complaint', 'symptoms', 'context', 'attachments', 'type', 'review'];
 const TYPE_LABEL_KEY = { priority: 'Priority', video: 'Video', standard: 'Standard' };
@@ -39,6 +42,12 @@ export default function NewConsultation() {
   const [submitError, setSubmitError] = useState('');
   const [success, setSuccess] = useState(false);
   const [consultation, setConsultation] = useState(null);
+
+  // Input-safety + video-eligibility — the backend is authoritative for both; these are only
+  // cached results of its most recent verdict so the wizard doesn't re-ask on every keystroke.
+  const [complaintChecking, setComplaintChecking] = useState(false);
+  const [videoEligibility, setVideoEligibility] = useState(null);
+  const complaintRef = useRef(null);
 
   const DURATION_PRESETS = [
     t('consultation.durationPresets.today'),
@@ -106,6 +115,15 @@ export default function NewConsultation() {
 
   const removeFile = (index) => setFiles((prev) => prev.filter((_, i) => i !== index));
 
+  // If an earlier edit (going back a step) turns a previously-selected video choice ineligible,
+  // fall back to standard rather than letting the patient reach payment with a selection the
+  // backend will reject anyway.
+  useEffect(() => {
+    if (consultationType === 'video' && videoEligibility?.videoEligible === false) {
+      setConsultationType('standard');
+    }
+  }, [consultationType, videoEligibility]);
+
   const validateStep = (index) => {
     const next = {};
     if (index === 0 && chiefComplaint.trim().length < 5) {
@@ -119,8 +137,54 @@ export default function NewConsultation() {
     return Object.keys(next).length === 0;
   };
 
-  const goNext = () => {
+  // Called when the complaint field is left (blur) — immediate UX feedback only. The backend
+  // re-checks the exact same rule, unconditionally, at actual submission time; this can never be
+  // the only line of defense.
+  const handleComplaintBlur = async () => {
+    const value = chiefComplaint.trim();
+    if (value.length < 5) return; // let the plain length validator handle this case
+    setComplaintChecking(true);
+    try {
+      const result = await precheckConsultationInput({ chiefComplaint: value });
+      if (!result.inputAccepted) {
+        setChiefComplaint('');
+        setErrors((prev) => ({ ...prev, chiefComplaint: result.message }));
+        complaintRef.current?.focus();
+      } else {
+        setErrors((prev) => ({ ...prev, chiefComplaint: undefined }));
+      }
+    } catch {
+      // Network/server hiccup on the pre-check — say nothing here; the authoritative check at
+      // actual submission will still catch a genuinely unsafe complaint.
+    } finally {
+      setComplaintChecking(false);
+    }
+  };
+
+  const goNext = async () => {
     if (!validateStep(step)) return;
+
+    if (step === 1) {
+      // By now we have complaint + symptoms + duration — enough for the backend to also decide
+      // video eligibility, which StepType needs. Re-validates complaint safety too, defensively.
+      try {
+        const result = await precheckConsultationInput({
+          chiefComplaint: chiefComplaint.trim(),
+          symptoms: symptoms.join(','),
+          duration: duration.trim(),
+        });
+        if (!result.inputAccepted) {
+          setStep(0);
+          setChiefComplaint('');
+          setErrors((prev) => ({ ...prev, chiefComplaint: result.message }));
+          return;
+        }
+        setVideoEligibility({ videoEligible: result.videoEligible, reasonCode: result.reasonCode });
+      } catch {
+        setVideoEligibility(null); // uncertain — StepType falls back to keeping video available
+      }
+    }
+
     setStep((s) => Math.min(s + 1, STEP_KEYS.length - 1));
   };
 
@@ -209,7 +273,14 @@ export default function NewConsultation() {
 
       <Card className="p-6 sm:p-8 mt-6">
         {step === 0 && (
-          <StepComplaint value={chiefComplaint} onChange={setChiefComplaint} error={errors.chiefComplaint} />
+          <StepComplaint
+            value={chiefComplaint}
+            onChange={setChiefComplaint}
+            onBlur={handleComplaintBlur}
+            checking={complaintChecking}
+            error={errors.chiefComplaint}
+            inputRef={complaintRef}
+          />
         )}
         {step === 1 && (
           <StepSymptoms
@@ -241,6 +312,7 @@ export default function NewConsultation() {
             onChange={setConsultationType}
             doctor={doctor}
             videoAvailability={videoAvailability}
+            videoEligibility={videoEligibility}
           />
         )}
         {step === 5 && (
@@ -313,20 +385,27 @@ function StepIndicator({ step }) {
   );
 }
 
-function StepComplaint({ value, onChange, error }) {
+function StepComplaint({ value, onChange, onBlur, checking, error, inputRef }) {
   const { t } = useTranslation();
   return (
     <div>
       <h2 className="text-lg font-semibold text-ink">{t('consultation.complaintTitle')}</h2>
       <p className="text-sm text-ink-muted mt-1 mb-4">{t('consultation.complaintSubtitle')}</p>
       <Textarea
+        ref={inputRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
         rows={5}
         placeholder={t('consultation.complaintPlaceholder')}
         error={error}
       />
-      <div className="flex items-center justify-end mt-1.5">
+      <div className="flex items-center justify-between mt-1.5">
+        {checking ? (
+          <span className="text-xs text-ink-muted">{t('common.loading')}</span>
+        ) : (
+          <span />
+        )}
         <span className="text-xs text-ink-muted">{value.length}/1000</span>
       </div>
     </div>
@@ -400,7 +479,7 @@ function StepSymptoms({
               onClick={() => setDuration(preset)}
               className={`px-3 py-1.5 text-sm rounded-control border transition-colors min-h-[38px] ${
                 duration === preset
-                  ? 'bg-primary-dark text-white border-primary-dark'
+                  ? 'bg-primary text-canvas border-primary'
                   : 'bg-surface text-ink-muted border-line hover:border-primary/40'
               }`}
             >
@@ -470,9 +549,10 @@ function StepAttachments({ files, onSelect, onRemove, error }) {
   return (
     <div>
       <h2 className="text-lg font-semibold text-ink">{t('consultation.attachmentsTitle')}</h2>
-      <p className="text-sm text-ink-muted mt-1 mb-4">
+      <p className="text-sm text-ink-muted mt-1">
         {t('consultation.attachmentsSubtitle', { max: MAX_FILES })}
       </p>
+      <p className="text-xs text-ink-muted/80 mt-1.5 mb-4">{t('consultation.attachmentsWhatsappNote')}</p>
 
       <label className="flex flex-col items-center justify-center border-2 border-dashed border-line rounded-card py-8 cursor-pointer hover:border-primary/40 hover:bg-mint/30 transition-colors">
         <svg className="w-8 h-8 text-ink-muted mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -517,7 +597,7 @@ function StepAttachments({ files, onSelect, onRemove, error }) {
   );
 }
 
-function StepType({ value, onChange, doctor, videoAvailability }) {
+function StepType({ value, onChange, doctor, videoAvailability, videoEligibility }) {
   const { t } = useTranslation();
   const options = [
     {
@@ -535,12 +615,27 @@ function StepType({ value, onChange, doctor, videoAvailability }) {
   ];
 
   const videoEnabled = !!doctor?.videoConsultationEnabled;
-  const videoBookable = videoEnabled && videoAvailability?.availableToday;
-  if (videoEnabled) {
+  const lowAcuityRouted = videoEligibility?.videoEligible === false;
+  const videoBookable = videoEnabled && videoAvailability?.availableToday && !lowAcuityRouted;
+  const showRedFlagGuidance = videoEligibility?.reasonCode === 'RED_FLAG_PRESENT';
+
+  if (!VIDEO_CONSULTATIONS_LIVE) {
     options.push({
       id: 'video',
       title: t('consultation.typeVideo'),
-      description: videoBookable ? t('consultation.typeVideoDesc') : t('consultation.typeVideoUnavailable'),
+      description: t('consultation.typeVideoComingSoon'),
+      disabled: true,
+      comingSoon: true,
+    });
+  } else if (videoEnabled) {
+    let description = t('consultation.typeVideoDesc');
+    if (!videoAvailability?.availableToday) description = t('consultation.typeVideoUnavailable');
+    else if (lowAcuityRouted) description = t('consultation.typeVideoLowAcuity');
+
+    options.push({
+      id: 'video',
+      title: t('consultation.typeVideo'),
+      description,
       fee: doctor?.videoConsultationFee,
       disabled: !videoBookable,
     });
@@ -550,6 +645,14 @@ function StepType({ value, onChange, doctor, videoAvailability }) {
     <div>
       <h2 className="text-lg font-semibold text-ink">{t('consultation.typeTitle')}</h2>
       <p className="text-sm text-ink-muted mt-1 mb-4">{t('consultation.typeSubtitle')}</p>
+
+      {showRedFlagGuidance && (
+        <div className="mb-4 flex items-start gap-2.5 rounded-card bg-warning-bg border border-warning/20 p-3.5">
+          <AlertIcon className="w-4.5 h-4.5 text-warning shrink-0 mt-0.5" />
+          <p className="text-sm text-warning">{t('consultation.redFlagGuidance')}</p>
+        </div>
+      )}
+
       <div className="grid sm:grid-cols-2 gap-3">
         {options.map((opt) => (
           <button
@@ -561,7 +664,10 @@ function StepType({ value, onChange, doctor, videoAvailability }) {
               value === opt.id ? 'border-primary ring-2 ring-primary/15 bg-mint/40' : 'border-line hover:border-primary/30'
             }`}
           >
-            <p className="font-medium text-ink">{opt.title}</p>
+            <span className="flex items-center justify-between gap-2">
+              <span className="font-medium text-ink">{opt.title}</span>
+              {opt.comingSoon && <ComingSoonBadge />}
+            </span>
             <p className="text-sm text-ink-muted mt-1">{opt.description}</p>
             {opt.fee != null && <p className="text-sm font-medium text-ink mt-3">₹{opt.fee}</p>}
           </button>
@@ -628,7 +734,7 @@ function StepReview({ chiefComplaint, symptoms, duration, additionalNotes, files
               <button
                 type="button"
                 onClick={() => onEdit(s.step)}
-                className="text-xs font-medium text-primary-dark hover:underline"
+                className="text-xs font-medium text-primary-light hover:underline"
               >
                 {t('common.edit')}
               </button>
@@ -640,7 +746,7 @@ function StepReview({ chiefComplaint, symptoms, duration, additionalNotes, files
 
       <div className="mt-5 rounded-card bg-mint/50 border border-primary/15 p-4 flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-medium text-primary-dark uppercase tracking-wide">{t('payment.amountToPay')}</p>
+          <p className="text-xs font-medium text-primary-light uppercase tracking-wide">{t('payment.amountToPay')}</p>
           <p className="text-2xl font-semibold text-ink mt-0.5">
             {fee != null ? `₹${fee}` : t('payment.feeUnavailable')}
           </p>

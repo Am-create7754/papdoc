@@ -26,7 +26,32 @@ export default function AccessAnywhereSection() {
                 aria-hidden="true"
                 className="pointer-events-none absolute -top-20 -right-10 w-56 h-56 rounded-full bg-white/5"
               />
-              <div className="relative space-y-5">
+              <svg
+                viewBox="0 0 160 160"
+                aria-hidden="true"
+                className="hidden sm:block pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 w-40 h-40 text-mint/80"
+              >
+                <path
+                  d="M34 124C34 92 70 98 80 72s40-30 46-44"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeDasharray="4 7"
+                  strokeLinecap="round"
+                  opacity="0.6"
+                />
+                <path d="M18 128l16-13 16 13v18H18z" fill="currentColor" opacity="0.18" />
+                <path d="M18 128l16-13 16 13v18H18z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                <path d="M30 146v-9h8v9" fill="none" stroke="currentColor" strokeWidth="2" />
+                <path d="M126 10a14 14 0 0 0-14 14c0 11 14 24 14 24s14-13 14-24a14 14 0 0 0-14-14z" fill="currentColor" opacity="0.22" />
+                <path d="M126 10a14 14 0 0 0-14 14c0 11 14 24 14 24s14-13 14-24a14 14 0 0 0-14-14z" fill="none" stroke="currentColor" strokeWidth="2" />
+                <path d="M126 18v12M120 24h12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                <circle cx="80" cy="72" r="13" fill="currentColor" opacity="0.15" />
+                <circle cx="80" cy="72" r="13" fill="none" stroke="currentColor" strokeWidth="2" />
+                <rect x="73" y="67" width="9" height="10" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+                <path d="M82 70l5-3v10l-5-3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+              </svg>
+              <div className="relative space-y-5 sm:pr-40">
                 {points.map((p) => {
                   const Icon = p.icon;
                   return (

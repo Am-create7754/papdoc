@@ -3,6 +3,9 @@ const Consultation = require('../models/Consultation');
 const Doctor = require('../models/Doctor');
 const ApiError = require('../utils/ApiError');
 const { UPLOAD_DIR } = require('../middlewares/upload');
+const prescriptionService = require('./prescriptionService');
+const inputSafetyService = require('./consultationInputSafetyService');
+const eligibilityService = require('./consultationEligibilityService');
 
 const PATIENT_SUMMARY_FIELDS =
   '_id name email phone dateOfBirth gender location bloodGroup allergies existingMedicalConditions currentMedications emergencyContact';
@@ -11,10 +14,58 @@ const PATIENT_SUMMARY_FIELDS =
 const HIDDEN_FIELDS =
   '-whatsappMessageId -doctorWhatsappReplyMessageId -prescriptionPdfFilename -prescriptionPdfFilenameHi';
 
+const VIDEO_INELIGIBLE_MESSAGE =
+  'Video Consultation is not available for this concern. Please choose Normal or Priority Consultation.';
+
+// Shared by both the create-consultation authoritative path and the lightweight wizard
+// pre-check endpoint, so the two can never drift apart.
+function evaluateInput(patient, { chiefComplaint, symptoms, duration, additionalNotes }) {
+  const safety = inputSafetyService.checkComplaintText(chiefComplaint);
+  if (!safety.accepted) {
+    return { inputAccepted: false, reasonCode: safety.reasonCode, message: safety.message, videoEligible: true };
+  }
+
+  const eligibility = eligibilityService.checkVideoEligibility({
+    dateOfBirth: patient.dateOfBirth,
+    chiefComplaint,
+    symptoms,
+    duration,
+    additionalNotes,
+  });
+
+  return { inputAccepted: true, videoEligible: eligibility.videoEligible, reasonCode: eligibility.reasonCode };
+}
+
+async function precheckConsultationInput(patient, data) {
+  return evaluateInput(patient, data);
+}
+
 async function createConsultation(patient, data, files = []) {
   const doctor = await Doctor.findOne({ isActive: true });
   if (!doctor) {
     throw new ApiError(503, 'No doctor is currently available');
+  }
+
+  const evaluation = evaluateInput(patient, data);
+
+  if (!evaluation.inputAccepted) {
+    console.warn(
+      'Consultation input rejected:',
+      evaluation.reasonCode,
+      'patient:',
+      patient._id.toString()
+    );
+    throw new ApiError(422, evaluation.message);
+  }
+
+  if (data.consultationType === 'video' && !evaluation.videoEligible) {
+    console.warn(
+      'Video consultation blocked by eligibility routing:',
+      evaluation.reasonCode,
+      'patient:',
+      patient._id.toString()
+    );
+    throw new ApiError(422, VIDEO_INELIGIBLE_MESSAGE);
   }
 
   const attachments = files.map((file) => ({
@@ -37,6 +88,8 @@ async function createConsultation(patient, data, files = []) {
     currentMedicationsSnapshot: patient.currentMedications || [],
     allergiesSnapshot: patient.allergies || [],
     status: 'submitted',
+    videoEligible: evaluation.videoEligible,
+    videoEligibilityReasonCode: evaluation.reasonCode,
   });
 }
 
@@ -104,6 +157,35 @@ async function getAttachmentForRequester(consultationId, attachmentId, requester
   };
 }
 
+// Secure fallback for when WhatsApp is unavailable — the doctor types a response directly on
+// the website. Feeds the exact same prescription pipeline as the WhatsApp reply path
+// (whatsappService.processDoctorReply): same fields, same status transition, same
+// generatePrescription call. No separate prescription logic exists for this path.
+async function submitManualDoctorReply(consultationId, doctorId, replyText) {
+  const consultation = await Consultation.findById(consultationId);
+  if (!consultation) {
+    throw new ApiError(404, 'Consultation not found');
+  }
+  if (consultation.doctorId.toString() !== doctorId.toString()) {
+    throw new ApiError(403, 'You do not have permission to respond to this consultation');
+  }
+  if (consultation.paymentStatus !== 'paid') {
+    throw new ApiError(409, 'This consultation has not been paid for yet');
+  }
+  if (consultation.doctorReply) {
+    throw new ApiError(409, 'This consultation already has a recorded response');
+  }
+
+  consultation.doctorReply = replyText;
+  consultation.doctorRepliedAt = new Date();
+  consultation.status = 'responded';
+  await consultation.save();
+
+  await prescriptionService.generatePrescription(consultation);
+
+  return Consultation.findById(consultationId).select(HIDDEN_FIELDS);
+}
+
 module.exports = {
   createConsultation,
   getMyConsultations,
@@ -111,4 +193,6 @@ module.exports = {
   getDoctorConsultations,
   getConsultationForDoctor,
   getAttachmentForRequester,
+  submitManualDoctorReply,
+  precheckConsultationInput,
 };

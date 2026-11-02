@@ -1,14 +1,24 @@
 {
-  "app": { "name": "Healthify" },
+  "app": {
+    "name": "Healthify"
+  },
   "nav": {
     "home": "Home",
-    "startConsultation": "Consult",
     "consultations": "Consultations",
     "prescriptions": "Prescriptions",
     "video": "Video",
     "profile": "Profile",
     "overview": "Overview",
     "logout": "Log out"
+  },
+  "errors": {
+    "crashTitle": "Something went wrong",
+    "crashMessage": "This page ran into an unexpected problem. Reloading usually fixes it — your saved information is safe.",
+    "reload": "Reload page",
+    "goHome": "Go to home",
+    "offline": "You're offline. Check your internet connection — we'll reconnect automatically.",
+    "network": "Could not reach the server. Please check your internet connection and try again.",
+    "timeout": "The request took too long. Your connection may be slow — please try again."
   },
   "common": {
     "back": "Back",
@@ -24,7 +34,10 @@
     "noneOnFile": "None on file",
     "optional": "Optional",
     "submit": "Submit",
-    "select": "Select"
+    "select": "Select",
+    "retry": "Retry",
+    "comingSoon": "Coming soon",
+    "soon": "Soon"
   },
   "auth": {
     "patientLoginTitle": "Patient Login",
@@ -35,6 +48,14 @@
     "registerSubtitle": "Register to start consulting your doctor online.",
     "tagline": "Personal healthcare, without the waiting room.",
     "taglineDesc": "Consult your doctor, track your health information, and stay on top of your care — all in one calm, simple place.",
+    "or": "or",
+    "googleFailed": "Google sign-in failed. Please try again.",
+    "googleUnavailable": "Google sign-in is unavailable right now.",
+    "trust": {
+      "video": "Video consultations with your doctor",
+      "prescriptions": "Digital prescriptions, always at hand",
+      "secure": "Your health data stays private and secure"
+    },
     "email": "Email",
     "password": "Password",
     "confirmPassword": "Confirm password",
@@ -58,17 +79,8 @@
     }
   },
   "home": {
-    "patientGreeting": "Hello, {{name}}",
-    "patientSubtitle": "How are you feeling today?",
-    "startConsultationTitle": "Start a consultation",
-    "startConsultationDesc": "Tell us what's going on and get your doctor's review.",
-    "myConsultationsTitle": "My consultations",
-    "myConsultationsDesc": "View your consultation history and status.",
-    "prescriptionsTitle": "Prescriptions",
-    "prescriptionsDesc": "Your prescriptions will appear here once issued.",
-    "profileTitle": "My profile",
-    "profileDesc": "Keep your health information up to date.",
-    "recentConsultation": "Most recent consultation",
+    "videoQueuedTitle": "You're in the video queue",
+    "viewQueueButton": "View queue",
     "noRecentConsultation": "You haven't started a consultation yet.",
     "startFirstConsultation": "Start your first consultation",
     "doctorGreeting": "Welcome back, Dr. {{name}}",
@@ -78,7 +90,38 @@
     "editProfileTitle": "Your profile",
     "editProfileDesc": "Keep your professional profile up to date for patients.",
     "recentConsultations": "Recent consultations",
-    "noConsultationsYet": "No consultations have been submitted yet."
+    "noConsultationsYet": "No consultations have been submitted yet.",
+    "yourDoctor": "Your doctor",
+    "yearsShort": "{{count}}+ yrs experience",
+    "statConsultations": "Total consultations",
+    "statPrescriptions": "Prescriptions ready",
+    "statInProgress": "Being reviewed now",
+    "recentTitle": "Your consultations",
+    "viewAll": "View all",
+    "noRecentHint": "When you consult your doctor, you can follow every step right here.",
+    "progress": {
+      "submitted": "Sent",
+      "paid": "Paid",
+      "reviewed": "Reviewed",
+      "prescription": "Prescription"
+    },
+    "directions": "Directions",
+    "hello": "Hello, {{name}}! 👋",
+    "chipConsultations_one": "{{count}} consultation",
+    "chipConsultations_other": "{{count}} consultations",
+    "chipPrescriptions_one": "{{count}} prescription",
+    "chipPrescriptions_other": "{{count}} prescriptions",
+    "searchPlaceholder": "Search your consultations…",
+    "insightsTitle": "Health insights",
+    "unitTotal": "total",
+    "unitReady": "ready",
+    "unitNow": "right now",
+    "ringHint": "of paid consultations have a prescription",
+    "viewProfile": "View profile",
+    "callClinic": "Call the clinic",
+    "videoCardTitle": "Video consultation",
+    "videoCardDesc": "Live one-on-one call with your doctor",
+    "videoComingSoon": "Live video calls with your doctor are on the way. Until then, Standard and Priority consultations are open."
   },
   "consultation": {
     "startTitle": "Start a consultation",
@@ -130,6 +173,8 @@
     "typeVideo": "Video consultation",
     "typeVideoDesc": "A live one-on-one video call with your doctor.",
     "typeVideoUnavailable": "Not available right now — fully booked or paused for today.",
+    "typeVideoLowAcuity": "Normal or Priority Consultation is recommended based on the information provided.",
+    "redFlagGuidance": "If your symptoms are severe or getting worse quickly, please seek immediate in-person or emergency medical care.",
     "reviewTitle": "Review & submit",
     "reviewSubtitle": "Check everything looks right before submitting.",
     "reviewNotes": "Additional notes",
@@ -140,20 +185,41 @@
     "successTitle": "Consultation submitted",
     "successMessage": "Your doctor has received your consultation and will review it soon.",
     "viewMyConsultations": "View my consultations",
-    "submitError": "Failed to submit consultation"
+    "submitError": "Failed to submit consultation",
+    "attachmentsWhatsappNote": "Your first photo (JPG or PNG) is also sent to your doctor on WhatsApp, so they can see it right away.",
+    "typeVideoComingSoon": "Live video calls with your doctor are coming soon. For now, choose Standard or Priority."
   },
   "myConsultations": {
     "title": "My Consultations",
     "backHome": "Back to home",
     "newButton": "New consultation",
     "empty": "You haven't started any consultations yet.",
-    "loadError": "Failed to load consultations"
+    "loadError": "Failed to load consultations",
+    "tab_all": "All",
+    "tab_active": "Active",
+    "tab_done": "Done",
+    "searchPlaceholder": "Search by problem or symptom…",
+    "noMatches": "No consultations match your search."
   },
   "doctorConsultations": {
     "title": "Consultations",
     "backHome": "Back to home",
     "empty": "No consultations have been submitted yet.",
-    "loadError": "Failed to load consultations"
+    "noMatches": "No consultations match your search or filters.",
+    "loadError": "Failed to load consultations",
+    "searchPlaceholder": "Search by patient name or reference...",
+    "typeAll": "All types",
+    "tabs": {
+      "all": "All",
+      "submitted": "New",
+      "under_review": "Under Review",
+      "responded": "Responded",
+      "completed": "Completed"
+    },
+    "prescriptionStatus": {
+      "generated": "Prescription ready",
+      "failed": "Prescription failed"
+    }
   },
   "consultationDetail": {
     "back": "Back",
@@ -181,7 +247,36 @@
     "awaitingResponse": "Waiting for the doctor's response.",
     "doctorResponse": "Doctor's response",
     "respondedOn": "Replied {{date}}",
-    "loadError": "Failed to load consultation"
+    "loadError": "Failed to load consultation",
+    "whatsapp": {
+      "notified": "Doctor notified",
+      "delivered": "Delivered",
+      "read": "Read",
+      "replied": "Doctor replied",
+      "prescriptionReady": "Prescription generated"
+    },
+    "manualReply": {
+      "title": "Respond from Healthify",
+      "hint": "Use this only if WhatsApp is unavailable. Your response is sent to the patient the same way as a WhatsApp reply, and generates their prescription immediately.",
+      "placeholder": "Type your response and advice for the patient...",
+      "submit": "Send response",
+      "success": "Response sent and prescription generated.",
+      "error": "Couldn't send your response. Please try again."
+    },
+    "video": {
+      "title": "Video consultation",
+      "notStarted": "Not started yet",
+      "queued": "Waiting in queue",
+      "ready": "Ready to join",
+      "active": "Call in progress",
+      "completed": "Call completed",
+      "cancelled": "Cancelled by patient",
+      "expired": "Patient did not join in time",
+      "noShow": "Marked as no-show",
+      "failed": "Booking could not be completed",
+      "startedAt": "Started {{time}}",
+      "endedAt": "Ended {{time}}"
+    }
   },
   "profile": {
     "doctorTitle": "Doctor Profile",
@@ -229,12 +324,18 @@
     "emergencyContactSection": "Emergency contact",
     "male": "Male",
     "female": "Female",
-    "other": "Other"
+    "other": "Other",
+    "sectionPersonal": "Personal details",
+    "sectionPersonalDesc": "Basic information your doctor sees with every consultation.",
+    "sectionMedical": "Medical information",
+    "sectionMedicalDesc": "Separate items with commas — e.g. Penicillin, Dust.",
+    "sectionEmergencyDesc": "Someone we can reach if we cannot reach you."
   },
   "prescriptions": {
     "title": "Prescriptions",
     "backHome": "Back to home",
-    "empty": "Prescriptions will appear here once your doctor issues one."
+    "empty": "Prescriptions will appear here once your doctor issues one.",
+    "loadError": "Failed to load your prescriptions"
   },
   "status": {
     "draft": "Draft",
@@ -281,6 +382,42 @@
     "label": "Language",
     "en": "English",
     "hi": "हिन्दी"
+  },
+  "doctorDashboard": {
+    "greetingMorning": "Good morning",
+    "greetingAfternoon": "Good afternoon",
+    "greetingEvening": "Good evening",
+    "greeting": "{{time}}, Dr. {{name}}",
+    "subtitle": "Here's your clinic activity for today.",
+    "viewAll": "View all",
+    "summary": {
+      "newConsultations": "New Consultations",
+      "underReview": "Under Review",
+      "videoWaiting": "Video Waiting",
+      "completedToday": "Completed Today",
+      "prescriptionsToday": "Prescriptions Sent Today"
+    },
+    "attention": {
+      "title": "Needs Attention",
+      "loadError": "Unable to load your dashboard. Please retry.",
+      "retry": "Retry",
+      "allCaughtUpTitle": "You're all caught up",
+      "allCaughtUpDesc": "No urgent items right now — new consultations and video patients will appear here.",
+      "newTitle": "New paid consultations ({{count}})",
+      "underReviewTitle": "Awaiting your response ({{count}})"
+    },
+    "video": {
+      "activeTitle": "Active Video Consultation",
+      "nextTitle": "Next Video Patient",
+      "rejoinButton": "Rejoin",
+      "startedAt": "Started at {{time}}",
+      "patientWaiting": "Patient is waiting for you to join",
+      "queueTitle": "Video queue ({{count}} waiting)"
+    },
+    "notify": {
+      "newConsultation": "New paid consultation received.",
+      "patientReady": "A patient is ready for their video consultation."
+    }
   },
   "video": {
     "title": "Video Consultation",
@@ -341,7 +478,8 @@
       "turnOffCamera": "Turn off camera",
       "turnOnCamera": "Turn on camera",
       "endCall": "End session",
-      "leaveCall": "Leave call"
+      "leaveCall": "Leave call",
+      "connectError": "Couldn't connect to the video call. Please try again in a moment."
     },
     "doctor": {
       "title": "Video Consultations",
@@ -361,6 +499,16 @@
       "emptyQueueDesc": "Paid video consultations will appear here in order.",
       "endError": "Couldn't end the session. Please try again.",
       "noShowError": "Couldn't mark this patient as a no-show. Please try again."
+    },
+    "comingSoon": {
+      "title": "Video consultations are coming soon",
+      "desc": "We're putting the finishing touches on live video calls with your doctor. Until then, you can consult online with a Standard or Priority consultation.",
+      "descDoctor": "Live video consultations are being set up and are not open to patients yet. Standard and Priority consultations work as usual.",
+      "point1": "Face-to-face video calls with your doctor",
+      "point2": "Join right from your phone or computer",
+      "point3": "Secure, private and simple to use",
+      "ctaPatient": "Start a consultation",
+      "ctaDoctor": "Back to dashboard"
     }
   },
   "landing": {
@@ -404,46 +552,43 @@
       "clinicLabel": "Clinic",
       "expertiseLabel": "Commonly treated",
       "regLabel": "Reg. No.",
-      "cta": "Start a consultation",
-      "loadError": "Doctor profile is temporarily unavailable."
+      "loadError": "Doctor profile is temporarily unavailable.",
+      "standardDesc": "Written review by your doctor",
+      "priorityDesc": "Reviewed ahead of the queue",
+      "videoDesc": "Live one-on-one video call",
+      "factYears": "Years of experience",
+      "factLanguages": "Languages spoken",
+      "factWays": "Ways to consult",
+      "optionsLabel": "Consult online",
+      "visitLabel": "Visit the clinic",
+      "directions": "Get directions",
+      "assurePersonal": "Every case read by the doctor personally",
+      "assurePrescription": "Signed prescription in your portal",
+      "assurePrivate": "Your records stay private"
     },
     "steps": {
       "eyebrow": "How it works",
-      "title": "Four simple steps",
-      "step1Title": "Tell us what's troubling you",
-      "step1Desc": "Share your symptoms, duration, and any reports or photos securely.",
-      "step2Title": "Pay securely",
-      "step2Desc": "Complete your payment through Razorpay's secure checkout.",
-      "step3Title": "Doctor reviews your consultation",
-      "step3Desc": "Your doctor personally reviews your case and medical history.",
-      "step4Title": "Receive your prescription online",
-      "step4Desc": "Get a digital prescription in your Healthify portal, ready to download."
-    },
-    "benefits": {
-      "eyebrow": "Why Healthify",
-      "title": "Care that fits into your life",
-      "item1Title": "Consult from anywhere",
-      "item1Desc": "No travel, no waiting rooms — talk to your doctor from home.",
-      "item2Title": "Secure medical information",
-      "item2Desc": "Your health details are protected and shared only with your doctor.",
-      "item3Title": "Share reports & photos",
-      "item3Desc": "Attach reports or images directly with your consultation.",
-      "item4Title": "Direct doctor review",
-      "item4Desc": "No queues or triage — your doctor reviews every consultation personally.",
-      "item5Title": "Digital prescription history",
-      "item5Desc": "Every prescription is saved and downloadable anytime.",
-      "item6Title": "English + हिन्दी",
-      "item6Desc": "Use Healthify comfortably in the language you prefer."
-    },
-    "experience": {
-      "eyebrow": "See it in action",
-      "title": "A real look at your Healthify portal",
-      "subtitle": "This is the same interface patients use, not a mockup.",
-      "note": "Illustrative preview of the patient portal.",
-      "step1": "Consultation submitted",
-      "step2": "Payment verified",
-      "step3": "Doctor notified",
-      "step4": "Prescription ready"
+      "title": "See your doctor online in 4 easy steps",
+      "subtitle": "No travel and no waiting room. Here is everything you need to do, one step at a time.",
+      "stepLabel": "Step",
+      "step1Title": "Create your free account",
+      "step1Desc": "Sign up with your name, email and phone number — or just use your Google account.",
+      "step1Point1": "Takes less than a minute",
+      "step1Point2": "Use the site in English or Hindi",
+      "step2Title": "Tell the doctor your problem",
+      "step2Desc": "Write what is wrong, since when, and how you feel. Add photos or old reports if you have them.",
+      "step2Point1": "Photos and PDF reports up to 5 MB",
+      "step2Point2": "Only your doctor can see it",
+      "step3Title": "Choose a plan and pay",
+      "step3Desc": "Pick Standard, Priority or a Video call. You see the fee first, then pay safely online.",
+      "step3Point1": "UPI, card or net banking",
+      "step3Point2": "Video calls happen right here on the site",
+      "step4Title": "Get your prescription",
+      "step4Desc": "The doctor reads your case personally and sends a signed prescription to your account.",
+      "step4Point1": "Download it as a PDF anytime",
+      "step4Point2": "All your past prescriptions stay saved",
+      "step3DescNoVideo": "Pick Standard or Priority. You see the fee first, then pay safely online.",
+      "step3Point2NoVideo": "Video consultations — coming soon"
     },
     "prescription": {
       "eyebrow": "Digital prescriptions",
@@ -454,7 +599,9 @@
       "point3": "Kept in your consultation history",
       "previewDoctor": "Dr. Your Doctor",
       "previewAdvice": "Doctor's advice",
-      "previewDownload": "Download PDF"
+      "previewDownload": "Download PDF",
+      "previewDays": "{{count}} days",
+      "previewSigned": "Digitally signed"
     },
     "access": {
       "eyebrow": "Access from anywhere",
@@ -483,8 +630,8 @@
     "finalCta": {
       "title": "Your doctor is now closer than ever.",
       "subtitle": "Start a consultation in a few minutes, from wherever you are.",
-      "primaryCta": "Start consultation",
-      "secondaryCta": "Login to Healthify"
+      "mapTitle": "Clinic location on Google Maps",
+      "openInMaps": "Open in Google Maps"
     },
     "footer": {
       "tagline": "Your trusted doctor's care, now accessible online.",
@@ -493,8 +640,45 @@
       "privacy": "Privacy",
       "terms": "Terms",
       "contact": "Contact",
+      "callLabel": "Call {{phone}}",
       "emergencyNote": "Healthify is not intended for medical emergencies. In an emergency, seek immediate in-person medical care.",
       "rights": "All rights reserved."
     }
+  },
+  "tips": {
+    "eyebrow": "Health tips",
+    "title": "Small daily habits that keep you well",
+    "disclaimer": "General wellness guidance — not a substitute for advice about your own condition.",
+    "badge": "Tip {{number}}",
+    "todayBadge": "Today's health tip",
+    "items": {
+      "water": {
+        "title": "Drink 8–10 glasses of water a day",
+        "desc": "Staying hydrated supports digestion, energy and kidney health. Sip through the day — more in summer heat."
+      },
+      "sleep": {
+        "title": "Sleep 7–8 hours every night",
+        "desc": "Regular, sound sleep helps your body repair, steadies blood pressure and keeps your mind sharp."
+      },
+      "walk": {
+        "title": "Walk at least 30 minutes daily",
+        "desc": "A brisk daily walk strengthens your heart, helps control blood sugar and lifts your mood."
+      },
+      "plate": {
+        "title": "Fill half your plate with vegetables and fruit",
+        "desc": "Fresh, home-cooked meals with less salt, sugar and oil keep weight and cholesterol in check."
+      },
+      "medicine": {
+        "title": "Take medicines exactly as prescribed",
+        "desc": "Don't skip doses or self-medicate — the right dose depends on your weight and health, not age alone."
+      },
+      "handwash": {
+        "title": "Wash hands for 20 seconds",
+        "desc": "Soap and water before meals and after the washroom is one of the simplest ways to stop infections."
+      }
+    }
+  },
+  "shell": {
+    "helpTitle": "Need help?"
   }
 }

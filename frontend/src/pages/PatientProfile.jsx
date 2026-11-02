@@ -7,6 +7,26 @@ import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import Button from '../components/ui/Button';
 import { PageLoader } from '../components/ui/Loader';
+import { AlertIcon, PillIcon, UserIcon } from '../components/layout/icons';
+
+function SectionTitle({ icon: Icon, title, desc }) {
+  return (
+    <div className="flex items-start gap-3 mb-5">
+      <span className="flex items-center justify-center w-10 h-10 rounded-2xl bg-primary/15 text-primary-light shrink-0">
+        <Icon className="w-5 h-5" />
+      </span>
+      <div>
+        <h2 className="font-display font-bold text-ink">{title}</h2>
+        {desc && <p className="text-sm text-ink-muted mt-0.5">{desc}</p>}
+      </div>
+    </div>
+  );
+}
+
+function initialsOf(name = '') {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '?';
+}
 
 const ARRAY_FIELDS = ['allergies', 'existingMedicalConditions', 'currentMedications'];
 
@@ -108,8 +128,31 @@ export default function PatientProfile() {
         </p>
       )}
 
+      <section className="relative overflow-hidden rounded-[28px] border border-primary/25 bg-gradient-to-br from-primary/20 via-surface to-surface p-6 sm:p-8 mb-6">
+        <div aria-hidden="true" className="absolute -top-20 -right-10 w-64 h-64 rounded-full bg-primary/20 blur-3xl" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center gap-5">
+          <span className="flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-primary-light to-primary text-canvas font-display font-bold text-3xl shadow-pop shrink-0">
+            {initialsOf(form.name)}
+          </span>
+          <div className="min-w-0">
+            <p className="font-display font-bold text-2xl text-ink truncate">{form.name}</p>
+            <p className="text-sm text-ink-muted truncate">{email}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[form.bloodGroup, form.gender && t(`profile.${form.gender}`), form.location, form.phone]
+                .filter(Boolean)
+                .map((chip) => (
+                  <span key={chip} className="rounded-full border border-line bg-canvas/50 px-3 py-1 text-xs font-medium text-ink">
+                    {chip}
+                  </span>
+                ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <form onSubmit={handleSubmit} className="space-y-5">
         <Card className="p-6">
+          <SectionTitle icon={UserIcon} title={t('profile.sectionPersonal')} desc={t('profile.sectionPersonalDesc')} />
           <div className="grid sm:grid-cols-2 gap-4">
             <Input label={t('profile.email')} value={email} disabled className="opacity-60" />
             <Input label={t('profile.name')} value={form.name} onChange={handleChange('name')} />
@@ -139,6 +182,7 @@ export default function PatientProfile() {
         </Card>
 
         <Card className="p-6 space-y-4">
+          <SectionTitle icon={PillIcon} title={t('profile.sectionMedical')} desc={t('profile.sectionMedicalDesc')} />
           <Input label={t('profile.allergies')} value={form.allergies} onChange={handleChange('allergies')} />
           <Input
             label={t('profile.existingMedicalConditions')}
@@ -153,7 +197,7 @@ export default function PatientProfile() {
         </Card>
 
         <Card className="p-6">
-          <p className="text-sm font-medium text-ink mb-4">{t('profile.emergencyContactSection')}</p>
+          <SectionTitle icon={AlertIcon} title={t('profile.emergencyContactSection')} desc={t('profile.sectionEmergencyDesc')} />
           <div className="grid sm:grid-cols-3 gap-4">
             <Input
               label={t('profile.emergencyContactName')}
@@ -173,8 +217,8 @@ export default function PatientProfile() {
           </div>
         </Card>
 
-        <div className="flex justify-end">
-          <Button type="submit" disabled={saving} size="lg">
+        <div className="sticky bottom-24 lg:bottom-4 z-20 flex justify-end">
+          <Button type="submit" disabled={saving} size="lg" className="shadow-pop">
             {saving ? t('common.saving') : t('common.save')}
           </Button>
         </div>

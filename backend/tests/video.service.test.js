@@ -34,11 +34,11 @@ async function withDailyCap(cap, fn) {
 let mongod;
 let roomCounter = 0;
 
-// A fake Twilio provider — real Twilio calls are never made in tests, per the requirement
+// A fake video provider — real Daily calls are never made in tests, per the requirement
 // that external provider calls be mockable.
-const fakeTwilio = {
+const fakeVideoProvider = {
   roomNameFor: (sessionId) => `test-room-${sessionId}`,
-  createRoom: async (uniqueName) => ({ sid: `RM_fake_${++roomCounter}`, uniqueName }),
+  createRoom: async (uniqueName) => ({ sid: `RM_fake_${++roomCounter}`, uniqueName, url: `https://fake.daily.co/${uniqueName}` }),
   completeRoom: async () => {},
   generateAccessToken: ({ identity, roomName }) => `fake-jwt.${identity}.${roomName}`,
 };
@@ -46,7 +46,7 @@ const fakeTwilio = {
 test.before(async () => {
   mongod = await MongoMemoryServer.create();
   await mongoose.connect(mongod.getUri());
-  videoService.__setTwilioProviderForTests(fakeTwilio);
+  videoService.__setVideoProviderForTests(fakeVideoProvider);
   // Ensure the partial unique index (the one-active-session-per-doctor invariant) is actually
   // built before any test relies on it — index creation happens in the background otherwise.
   await VideoSession.init();

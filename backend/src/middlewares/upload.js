@@ -3,8 +3,9 @@ const path = require('path');
 const crypto = require('crypto');
 const fs = require('fs');
 const ApiError = require('../utils/ApiError');
+const { env } = require('../config/env');
 
-const UPLOAD_DIR = path.join(__dirname, '..', '..', 'uploads', 'consultations');
+const UPLOAD_DIR = path.join(env.uploadsDir, 'consultations');
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const ALLOWED_MIME_TYPES = {

@@ -7,14 +7,20 @@ import {
   fetchDoctorConsultationById,
   fetchAttachmentBlob,
   fetchPrescriptionBlob,
+  submitManualDoctorReply,
 } from '../services/consultationService';
 import { createPaymentOrder } from '../services/paymentService';
 import { openRazorpayCheckout } from '../utils/razorpayCheckout';
+import { fetchVideoSummaryByConsultation } from '../services/videoService';
+import { useToast } from '../contexts/ToastContext';
 import StatusBadge from '../components/StatusBadge';
+import ConsultationProgress from '../components/ConsultationProgress';
 import PaymentStatusBadge from '../components/PaymentStatusBadge';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import Textarea from '../components/ui/Textarea';
 import { PageLoader } from '../components/ui/Loader';
+import { CheckCircleIcon, ClockIcon, VideoIcon } from '../components/layout/icons';
 
 export default function ConsultationDetail() {
   const { t } = useTranslation();
@@ -31,6 +37,11 @@ export default function ConsultationDetail() {
   const [prescriptionBusy, setPrescriptionBusy] = useState('');
   const [prescriptionError, setPrescriptionError] = useState('');
   const [prescriptionLang, setPrescriptionLang] = useState('en');
+  const [videoSummary, setVideoSummary] = useState(null);
+  const [manualReplyText, setManualReplyText] = useState('');
+  const [manualReplySubmitting, setManualReplySubmitting] = useState(false);
+  const [manualReplyError, setManualReplyError] = useState('');
+  const notify = useToast();
 
   useEffect(() => {
     (async () => {
@@ -48,6 +59,15 @@ export default function ConsultationDetail() {
       }
     })();
   }, [id, isDoctor, t]);
+
+  // Video session state lives in a separate collection — only relevant, and only fetched,
+  // for the doctor's view of a video-type consultation.
+  useEffect(() => {
+    if (!isDoctor || consultation?.consultationType !== 'video') return;
+    fetchVideoSummaryByConsultation(id)
+      .then(setVideoSummary)
+      .catch(() => setVideoSummary(null));
+  }, [id, isDoctor, consultation?.consultationType]);
 
   const handlePayNow = async () => {
     setPaymentError('');
@@ -67,6 +87,7 @@ export default function ConsultationDetail() {
               paymentAmount: result.amount,
               paidAt: result.paidAt,
             }));
+            notify(t('payment.successTitle'), { tone: 'success' });
             resolve();
           },
           onError: (err, reason) => {
@@ -81,6 +102,22 @@ export default function ConsultationDetail() {
       setPaymentError(err.response?.data?.message || t('payment.orderError'));
     } finally {
       setPaying(false);
+    }
+  };
+
+  const handleManualReplySubmit = async (e) => {
+    e.preventDefault();
+    setManualReplyError('');
+    setManualReplySubmitting(true);
+    try {
+      const updated = await submitManualDoctorReply(id, manualReplyText.trim());
+      setConsultation(updated);
+      setManualReplyText('');
+      notify(t('consultationDetail.manualReply.success'), { tone: 'success' });
+    } catch (err) {
+      setManualReplyError(err.response?.data?.message || t('consultationDetail.manualReply.error'));
+    } finally {
+      setManualReplySubmitting(false);
     }
   };
 
@@ -147,7 +184,7 @@ export default function ConsultationDetail() {
     <div>
       <BackLink to={backTo} label={t('consultationDetail.back')} />
 
-      <div className="grid lg:grid-cols-3 gap-5 items-start">
+      <div className="grid lg:grid-cols-3 gap-5 items-start [&>*]:min-w-0">
         {isDoctor && patient && (
           <Card className="p-6 lg:order-2 lg:col-span-1 lg:sticky lg:top-24">
             <h2 className="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-3">
@@ -186,7 +223,7 @@ export default function ConsultationDetail() {
         <div className={`space-y-5 lg:order-1 ${isDoctor ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
           <Card className="p-6">
             <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
-              <h1 className="text-lg font-semibold text-ink">{t('consultationDetail.consultationSection')}</h1>
+              <h1 className="font-display font-bold text-xl text-ink">{t('consultationDetail.consultationSection')}</h1>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-ink-muted capitalize">{consultation.consultationType}</span>
                 <StatusBadge status={consultation.status} />
@@ -194,11 +231,51 @@ export default function ConsultationDetail() {
               </div>
             </div>
 
+            {!isDoctor && (
+              <div className="mb-6 rounded-2xl border border-line/70 bg-surface-muted/40 px-4 pb-3 pt-1">
+                <ConsultationProgress consultation={consultation} />
+              </div>
+            )}
+
+            {isDoctor && consultation.paymentStatus === 'paid' && (
+              <WhatsAppStatusStrip consultation={consultation} t={t} />
+            )}
+
+            {isDoctor && consultation.consultationType === 'video' && (
+              <VideoStatusCard summary={videoSummary} t={t} />
+            )}
+
+            {isDoctor && consultation.paymentStatus === 'paid' && !consultation.doctorReply && (
+              <div className="mb-5 rounded-card border border-line p-4">
+                <p className="text-sm font-semibold text-ink mb-1">{t('consultationDetail.manualReply.title')}</p>
+                <p className="text-xs text-ink-muted mb-3">{t('consultationDetail.manualReply.hint')}</p>
+                <form onSubmit={handleManualReplySubmit}>
+                  <Textarea
+                    value={manualReplyText}
+                    onChange={(e) => setManualReplyText(e.target.value)}
+                    rows={4}
+                    placeholder={t('consultationDetail.manualReply.placeholder')}
+                    maxLength={4000}
+                    aria-label={t('consultationDetail.manualReply.title')}
+                  />
+                  {manualReplyError && <p className="text-sm text-danger mt-2">{manualReplyError}</p>}
+                  <div className="flex justify-end mt-3">
+                    <Button
+                      type="submit"
+                      disabled={manualReplySubmitting || manualReplyText.trim().length < 5}
+                    >
+                      {manualReplySubmitting ? t('common.saving') : t('consultationDetail.manualReply.submit')}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            )}
+
             {!isDoctor && consultation.paymentStatus !== 'paid' && (
               <div className="mb-5 rounded-card bg-mint/50 border border-primary/15 p-4">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div>
-                    <p className="text-xs font-medium text-primary-dark uppercase tracking-wide">
+                    <p className="text-xs font-medium text-primary-light uppercase tracking-wide">
                       {t('payment.amountToPay')}
                     </p>
                     <p className="text-xl font-semibold text-ink mt-0.5">
@@ -230,9 +307,9 @@ export default function ConsultationDetail() {
               </p>
             )}
 
-            {!isDoctor && consultation.doctorReply && (
+            {consultation.doctorReply && (
               <div className="mb-5 rounded-card bg-mint/40 border border-primary/15 p-4">
-                <p className="text-xs font-semibold text-primary-dark uppercase tracking-wide mb-1.5">
+                <p className="text-xs font-semibold text-primary-light uppercase tracking-wide mb-1.5">
                   {t('consultationDetail.doctorResponse')}
                 </p>
                 <p className="text-[15px] text-ink whitespace-pre-wrap">{consultation.doctorReply}</p>
@@ -272,7 +349,7 @@ export default function ConsultationDetail() {
                           onClick={() => setPrescriptionLang(lng)}
                           aria-pressed={prescriptionLang === lng}
                           className={`px-2.5 py-1.5 rounded-[8px] font-medium transition-colors min-h-[36px] ${
-                            prescriptionLang === lng ? 'bg-surface text-primary-dark shadow-soft' : 'text-ink-muted hover:text-ink'
+                            prescriptionLang === lng ? 'bg-primary text-canvas shadow-soft' : 'text-ink-muted hover:text-ink'
                           }`}
                         >
                           {lng === 'en' ? 'EN' : 'हि'}
@@ -348,7 +425,7 @@ export default function ConsultationDetail() {
                         <span className="text-sm text-ink truncate">{a.originalName}</span>
                         <button
                           onClick={() => openAttachment(a._id)}
-                          className="text-sm font-medium text-primary-dark hover:underline ml-3 shrink-0"
+                          className="text-sm font-medium text-primary-light hover:underline ml-3 shrink-0"
                         >
                           {t('common.view')}
                         </button>
@@ -390,7 +467,7 @@ export default function ConsultationDetail() {
 
 function BackLink({ to, label }) {
   return (
-    <Link to={to} className="inline-flex items-center text-sm font-medium text-primary hover:text-primary-dark mb-5">
+    <Link to={to} className="inline-flex items-center text-sm font-medium text-primary hover:text-primary-light mb-5">
       ← {label}
     </Link>
   );
@@ -411,6 +488,81 @@ function Block({ label, content }) {
     <div>
       <p className="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-1.5">{label}</p>
       <p className="text-[15px] text-ink whitespace-pre-wrap">{content}</p>
+    </div>
+  );
+}
+
+// Operational status only — never renders wamid/Meta message IDs, just what already happened.
+function WhatsAppStatusStrip({ consultation, t }) {
+  const steps = [
+    { done: !!consultation.whatsappNotifiedAt, label: t('consultationDetail.whatsapp.notified') },
+    {
+      done: ['delivered', 'read'].includes(consultation.whatsappDeliveryStatus),
+      label:
+        consultation.whatsappDeliveryStatus === 'read'
+          ? t('consultationDetail.whatsapp.read')
+          : t('consultationDetail.whatsapp.delivered'),
+    },
+    { done: !!consultation.doctorRepliedAt, label: t('consultationDetail.whatsapp.replied') },
+    { done: consultation.prescriptionStatus === 'generated', label: t('consultationDetail.whatsapp.prescriptionReady') },
+  ];
+
+  return (
+    <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-2 bg-surface rounded-control p-3.5">
+      {steps.map((step) => (
+        <span
+          key={step.label}
+          className={`inline-flex items-center gap-1.5 text-xs font-medium ${
+            step.done ? 'text-ink' : 'text-ink-muted/60'
+          }`}
+        >
+          {step.done ? (
+            <CheckCircleIcon className="w-3.5 h-3.5 text-success" />
+          ) : (
+            <ClockIcon className="w-3.5 h-3.5" />
+          )}
+          {step.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+const VIDEO_STATUS_LABEL_KEY = {
+  queued: 'consultationDetail.video.queued',
+  ready: 'consultationDetail.video.ready',
+  active: 'consultationDetail.video.active',
+  completed: 'consultationDetail.video.completed',
+  cancelled: 'consultationDetail.video.cancelled',
+  expired: 'consultationDetail.video.expired',
+  no_show: 'consultationDetail.video.noShow',
+  failed: 'consultationDetail.video.failed',
+};
+
+function VideoStatusCard({ summary, t }) {
+  return (
+    <div className="mb-5 rounded-card border border-line p-4">
+      <p className="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-2 flex items-center gap-1.5">
+        <VideoIcon className="w-3.5 h-3.5" />
+        {t('consultationDetail.video.title')}
+      </p>
+      {!summary ? (
+        <p className="text-sm text-ink-muted">{t('consultationDetail.video.notStarted')}</p>
+      ) : (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink">
+          <span>{t(VIDEO_STATUS_LABEL_KEY[summary.status] || 'consultationDetail.video.notStarted')}</span>
+          {summary.startedAt && (
+            <span className="text-ink-muted text-xs">
+              {t('consultationDetail.video.startedAt', { time: new Date(summary.startedAt).toLocaleString() })}
+            </span>
+          )}
+          {summary.endedAt && (
+            <span className="text-ink-muted text-xs">
+              {t('consultationDetail.video.endedAt', { time: new Date(summary.endedAt).toLocaleString() })}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

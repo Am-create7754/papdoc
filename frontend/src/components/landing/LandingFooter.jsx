@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import ResponsiveContainer from '../ui/ResponsiveContainer';
 import Logo from './Logo';
 import { fetchPublicDoctorProfile } from '../../services/doctorService';
+import { CLINIC_PHONES, formatPhone } from '../../constants/clinic';
 
 const NAV_LINKS = [
   { key: 'howItWorks', href: '#how-it-works' },
@@ -26,7 +27,7 @@ export default function LandingFooter() {
           without cutting a hard line across the canvas. */}
       <div aria-hidden="true" className="h-px bg-gradient-to-r from-transparent via-line/60 to-transparent" />
       <ResponsiveContainer className="relative py-12 sm:py-14">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-10">
           <div className="lg:col-span-2">
             <Logo />
             <p className="mt-3 text-sm text-ink-muted leading-relaxed max-w-xs">{t('landing.footer.tagline')}</p>
@@ -62,7 +63,25 @@ export default function LandingFooter() {
             <ul className="space-y-2">
               <li className="text-sm text-ink-muted">{t('landing.footer.privacy')}</li>
               <li className="text-sm text-ink-muted">{t('landing.footer.terms')}</li>
-              <li className="text-sm text-ink-muted">{t('landing.footer.contact')}</li>
+            </ul>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold text-ink uppercase tracking-wide mb-3">
+              {t('landing.footer.contact')}
+            </p>
+            <ul className="space-y-2">
+              {CLINIC_PHONES.map((phone) => (
+                <li key={phone}>
+                  <a
+                    href={`tel:+91${phone}`}
+                    aria-label={t('landing.footer.callLabel', { phone })}
+                    className="text-sm text-ink-muted hover:text-primary transition-colors"
+                  >
+                    {formatPhone(phone)}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
         </div>

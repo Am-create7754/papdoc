@@ -21,7 +21,7 @@ export default function LanguageSwitcher({ className = '' }) {
           onClick={() => toggle(lng)}
           aria-pressed={current === lng}
           className={`px-2.5 py-1.5 rounded-[8px] font-medium transition-colors min-h-[36px] ${
-            current === lng ? 'bg-surface text-primary-dark shadow-soft' : 'text-ink-muted hover:text-ink'
+            current === lng ? 'bg-primary text-canvas shadow-soft' : 'text-ink-muted hover:text-ink'
           }`}
         >
           {lng === 'en' ? 'EN' : 'हि'}

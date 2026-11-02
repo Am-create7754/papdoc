@@ -22,6 +22,8 @@ async function handlePostPaymentSideEffects(consultation) {
     const videoSession = await videoService.createSessionAfterPayment(consultation);
     return { videoSession };
   }
+  // Priority consultations get the 🔴 template here instead of the standard one — still a single,
+  // reply-able message (see whatsappService.sendConsultationToDoctor).
   await notifyDoctorSafely(consultation);
   return { videoSession: null };
 }
@@ -60,6 +62,13 @@ async function createOrder(patient, consultationId) {
   }
 
   if (consultation.consultationType === 'video') {
+    // Defense-in-depth: eligibility was already decided once, at creation time, from the
+    // consultation's own content (consultationEligibilityService) and stored immutably. A
+    // patient cannot flip a rejected consultation back to video-eligible by calling this
+    // endpoint directly — there is no re-classification here, only a check of the stored result.
+    if (consultation.videoEligible === false) {
+      throw new ApiError(409, 'Video Consultation is not available for this consultation.');
+    }
     // Advisory only — the authoritative, race-safe capacity check runs atomically when the
     // VideoSession is actually created after payment verification (see videoService).
     await videoService.assertBookableForOrder(doctor);

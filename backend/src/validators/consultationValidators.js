@@ -18,4 +18,17 @@ const createConsultationSchema = z.object({
   consultationType: z.enum(['standard', 'priority', 'video']),
 });
 
-module.exports = { createConsultationSchema };
+const manualReplySchema = z.object({
+  reply: z.string().trim().min(5, 'Please write a response of at least 5 characters').max(4000),
+});
+
+// Deliberately lenient (all optional) — this backs the wizard's incremental pre-checks, which
+// may run with only the chief complaint filled in and symptoms/duration not yet reached.
+const precheckInputSchema = z.object({
+  chiefComplaint: z.string().trim().max(1000).optional().or(z.literal('')),
+  symptoms: z.string().trim().max(500).optional().or(z.literal('')),
+  duration: z.string().trim().max(100).optional().or(z.literal('')),
+  additionalNotes: z.string().trim().max(2000).optional().or(z.literal('')),
+});
+
+module.exports = { createConsultationSchema, manualReplySchema, precheckInputSchema };

@@ -23,6 +23,11 @@ const getDoctorQueue = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data });
 });
 
+const getSummaryForConsultation = asyncHandler(async (req, res) => {
+  const data = await videoService.getSessionSummaryForConsultation(req.params.consultationId, requesterFrom(req));
+  res.status(200).json({ success: true, data });
+});
+
 const issueToken = asyncHandler(async (req, res) => {
   const data = await videoService.issueToken(req.params.sessionId, requesterFrom(req));
   res.status(200).json({ success: true, data });
@@ -53,6 +58,7 @@ module.exports = {
   getMy,
   getOneForPatient,
   getDoctorQueue,
+  getSummaryForConsultation,
   issueToken,
   reportJoined,
   endSession,

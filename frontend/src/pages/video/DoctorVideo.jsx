@@ -1,14 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  fetchDoctorVideoQueue,
-  requestVideoToken,
-  reportVideoJoined,
-  endVideoSession,
-  markVideoNoShow,
-} from '../../services/videoService';
+import { fetchDoctorVideoQueue, reportVideoJoined } from '../../services/videoService';
 import { fetchMyDoctorProfile, updateMyDoctorProfile } from '../../services/doctorService';
+import { useDoctorVideoCall } from '../../hooks/useDoctorVideoCall';
 import PageHeader from '../../components/ui/PageHeader';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -20,13 +15,12 @@ import { VideoIcon, ClockIcon } from '../../components/layout/icons';
 export default function DoctorVideo() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-
-  const [inCall, setInCall] = useState(false);
-  const [callCreds, setCallCreds] = useState(null);
-  const [callSessionId, setCallSessionId] = useState(null);
-  const [busy, setBusy] = useState('');
-  const [error, setError] = useState('');
   const [availabilitySaving, setAvailabilitySaving] = useState(false);
+
+  const refetchQueue = () => queryClient.invalidateQueries({ queryKey: ['doctorVideoQueue'] });
+
+  const { inCall, callCreds, callSessionId, busy, error, setError, join, endSession, markNoShow, disconnect, refreshToken } =
+    useDoctorVideoCall({ onEnded: refetchQueue });
 
   const { data: queueView, isLoading } = useQuery({
     queryKey: ['doctorVideoQueue'],
@@ -36,39 +30,13 @@ export default function DoctorVideo() {
 
   const { data: profile } = useQuery({ queryKey: ['myDoctorProfile'], queryFn: fetchMyDoctorProfile });
 
-  const refetchQueue = () => queryClient.invalidateQueries({ queryKey: ['doctorVideoQueue'] });
-
-  const handleJoin = async (sessionId) => {
-    setError('');
-    setBusy(sessionId);
-    try {
-      const creds = await requestVideoToken(sessionId);
-      setCallCreds(creds);
-      setCallSessionId(sessionId);
-      setInCall(true);
-    } catch (err) {
-      setError(err.response?.data?.message || t('video.call.joinError'));
-    } finally {
-      setBusy('');
-    }
-  };
-
   const handleEndSession = async () => {
-    if (!callSessionId) return;
-    await endVideoSession(callSessionId).catch((err) => setError(err.response?.data?.message || t('video.doctor.endError')));
-    refetchQueue();
+    await endSession(); // refetch happens via disconnect()'s onEnded once the call room closes
   };
 
   const handleNoShow = async (sessionId) => {
-    setBusy(sessionId);
-    try {
-      await markVideoNoShow(sessionId, 'Patient did not join in time.');
-      refetchQueue();
-    } catch (err) {
-      setError(err.response?.data?.message || t('video.doctor.noShowError'));
-    } finally {
-      setBusy('');
-    }
+    await markNoShow(sessionId, 'Patient did not join in time.');
+    refetchQueue();
   };
 
   const toggleAvailability = async () => {
@@ -92,19 +60,15 @@ export default function DoctorVideo() {
         <PageHeader title={t('video.doctor.title')} />
         <VideoCallRoom
           token={callCreds.token}
-          roomName={callCreds.roomName}
-          myLabel={t('video.doctorFallbackName')}
+          roomUrl={callCreds.roomUrl}
+          myLabel={profile?.fullName || t('video.doctorFallbackName')}
           remoteLabel={queueView?.active?.patientName || t('video.patientFallbackName')}
           canEndSession
+          refreshToken={refreshToken}
           endBusy={false}
           onJoined={() => reportVideoJoined(callSessionId)}
           onEndCall={handleEndSession}
-          onDisconnected={() => {
-            setInCall(false);
-            setCallCreds(null);
-            setCallSessionId(null);
-            refetchQueue();
-          }}
+          onDisconnected={disconnect}
         />
       </div>
     );
@@ -158,7 +122,7 @@ export default function DoctorVideo() {
                     {t('video.doctor.markNoShow')}
                   </Button>
                 )}
-                <Button onClick={() => handleJoin(active._id)} disabled={busy === active._id}>
+                <Button onClick={() => join(active._id)} disabled={busy === active._id}>
                   {busy === active._id ? t('video.call.connecting') : t('video.doctor.joinButton')}
                 </Button>
               </div>

@@ -12,6 +12,10 @@ const patientLoginSchema = z.object({
   password: z.string().min(1),
 });
 
+const patientGoogleLoginSchema = z.object({
+  credential: z.string().min(1),
+});
+
 const doctorLoginSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
   password: z.string().min(1),
@@ -24,6 +28,7 @@ const refreshSchema = z.object({
 module.exports = {
   patientRegisterSchema,
   patientLoginSchema,
+  patientGoogleLoginSchema,
   doctorLoginSchema,
   refreshSchema,
 };

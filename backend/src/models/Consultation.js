@@ -27,6 +27,15 @@ const consultationSchema = new mongoose.Schema(
     consultationType: { type: String, enum: ['standard', 'priority', 'video'], default: 'standard' },
     attachments: { type: [attachmentSchema], default: [] },
 
+    // Computed once at creation by consultationEligibilityService and never recomputed — this is
+    // the authoritative record of whether Video was offered/allowed for this consultation's
+    // content, checked again (cheaply, from this stored value) at order-creation time.
+    videoEligible: { type: Boolean, default: true },
+    videoEligibilityReasonCode: {
+      type: String,
+      enum: ['AGE_UNDER_10', 'RED_FLAG_PRESENT', 'LOW_ACUITY_NO_RED_FLAGS', 'UNCERTAIN'],
+    },
+
     status: {
       type: String,
       enum: ['draft', 'submitted', 'under_review', 'responded', 'completed', 'cancelled'],
@@ -56,6 +65,16 @@ const consultationSchema = new mongoose.Schema(
     whatsappFailedAt: { type: Date },
     whatsappFailureCode: { type: String, trim: true },
     whatsappFailureMessage: { type: String, trim: true, maxlength: 500 },
+
+    // Operational doctor alerts (🔵 video paid / 🔴 priority paid) — deliberately separate from
+    // whatsappMessageId/doctorWhatsappReplyMessageId above. Those two fields are the sole
+    // correlation key the prescription-reply flow uses; a doctor reply to one of these alerts
+    // must never match that lookup. sentAt doubles as the idempotency guard (claimed atomically
+    // before send) so a duplicate webhook/verify retry can't fire the same alert twice.
+    videoAlertMessageId: { type: String, trim: true },
+    videoAlertSentAt: { type: Date },
+    priorityAlertMessageId: { type: String, trim: true },
+    priorityAlertSentAt: { type: Date },
 
     prescriptionStatus: { type: String, enum: ['none', 'generated', 'failed'], default: 'none' },
     prescriptionGeneratedAt: { type: Date },

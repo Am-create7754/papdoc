@@ -38,8 +38,10 @@ const videoSessionSchema = new mongoose.Schema(
     doctorLeftAt: { type: Date },
     patientLeftAt: { type: Date },
 
-    twilioRoomSid: { type: String, trim: true },
-    twilioRoomName: { type: String, trim: true, unique: true, sparse: true },
+    // Daily room for this session, created lazily on the first token request.
+    videoRoomId: { type: String, trim: true },
+    videoRoomName: { type: String, trim: true, unique: true, sparse: true },
+    videoRoomUrl: { type: String, trim: true },
 
     estimatedWaitMinutes: { type: Number, min: 0 },
 

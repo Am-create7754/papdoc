@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import {
   fetchMyVideoSession,
   fetchVideoAvailability,
@@ -59,6 +60,16 @@ export default function PatientVideo() {
     enabled: !session || !ACTIVE_STATUSES.includes(session.status),
   });
 
+  const notify = useToast();
+  const lastNotifiedStatus = useRef(null);
+  useEffect(() => {
+    if (!session) return;
+    if (session.status === 'ready' && lastNotifiedStatus.current !== 'ready') {
+      notify(t('video.ready.title'), { tone: 'info' });
+    }
+    lastNotifiedStatus.current = session.status;
+  }, [session?.status, notify, t]);
+
   const refetchSession = () => queryClient.invalidateQueries({ queryKey: ['myVideoSession'] });
 
   const handleJoin = async () => {
@@ -95,10 +106,11 @@ export default function PatientVideo() {
         <PageHeader title={t('video.title')} />
         <VideoCallRoom
           token={callCreds.token}
-          roomName={callCreds.roomName}
+          roomUrl={callCreds.roomUrl}
           myLabel={user?.name}
           remoteLabel={doctor?.fullName || t('video.doctorFallbackName')}
           canEndSession={false}
+          refreshToken={() => requestVideoToken(session._id).then((creds) => creds.token)}
           onJoined={() => reportVideoJoined(session._id).then(refetchSession)}
           onDisconnected={() => {
             setInCall(false);
@@ -149,7 +161,7 @@ function BookingView({ availability, outcome, navigate, t }) {
           {outcome.status === 'completed' && outcome.consultationId && (
             <Link
               to={`/patient/consultations/${outcome.consultationId}`}
-              className="text-sm font-medium text-primary-dark hover:underline mt-1 inline-block"
+              className="text-sm font-medium text-primary-light hover:underline mt-1 inline-block"
             >
               {t('video.viewConsultation')}
             </Link>

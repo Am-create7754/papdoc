@@ -22,24 +22,26 @@
     --color-danger-bg: 254 226 226;
   }
 
-  /* Black + gold, editorial pass — warm near-black surfaces (no blue undertone) with a
-     three-tier gold accent family, matched to the approved COSO/Dublin-Ranch-inspired
-     prototype. `primary` is the mid gold used for standalone text/icons/borders/focus rings.
-     `primary-dark` is a deep bronze-black — dark enough to host ivory text as a solid panel
-     fill AND to read as text on a bright gold chip, both at once. `primary-light` is the
-     bright champagne highlight (hover states, gradient emphasis). `mint` is a richer warm
-     gold reserved for solid chip/badge fills (the "gold seal" look), distinct from the
-     brighter standalone `primary`. `warning` stays shifted toward copper/terracotta so status
-     badges are never mistaken for the gold brand accent. */
+  /* Black + gold, obsidian pass — the base surfaces are a near-neutral graphite/obsidian
+     (warmth pulled out of canvas/surface/line so they read as premium dark stone rather than
+     muddy brown), while the gold family carries ALL of the warmth in the palette. `primary` is
+     the mid gold used for standalone text/icons/borders/focus rings. `primary-dark` is a
+     deliberately warm bronze-black — the one token that's allowed to stay brown-leaning, since
+     its only jobs are hosting ivory text as a solid panel fill and reading as text on a bright
+     gold chip, both a "bronze plaque" effect, not the page background. `primary-light` is the
+     bright champagne highlight (hover states, gradient emphasis). `mint` is a richer warm gold
+     reserved for solid chip/badge fills (the "gold seal" look), distinct from the brighter
+     standalone `primary`. `warning` stays shifted toward copper/terracotta so status badges are
+     never mistaken for the gold brand accent. */
   .dark {
-    --color-canvas: 13 11 8;
-    --color-surface: 26 22 17;
-    --color-surface-muted: 34 28 20;
-    --color-line: 58 47 30;
+    --color-canvas: 9 9 10;
+    --color-surface: 19 18 21;
+    --color-surface-muted: 26 25 29;
+    --color-line: 44 41 39;
     --color-ink: 241 233 216;
     --color-ink-muted: 169 156 135;
     --color-primary: 200 155 60;
-    --color-primary-dark: 26 20 12;
+    --color-primary-dark: 24 18 12;
     --color-primary-light: 233 201 120;
     --color-mint: 217 179 84;
     --color-success: 74 222 128;

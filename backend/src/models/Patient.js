@@ -10,8 +10,22 @@ const patientSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    phone: { type: String, required: true, trim: true },
-    passwordHash: { type: String, required: true, select: false },
+    // Google sign-ins have no phone or password, so both are only required for email signups.
+    phone: {
+      type: String,
+      trim: true,
+      required() {
+        return !this.googleId;
+      },
+    },
+    passwordHash: {
+      type: String,
+      select: false,
+      required() {
+        return !this.googleId;
+      },
+    },
+    googleId: { type: String, unique: true, sparse: true },
     role: { type: String, enum: ['patient'], default: 'patient' },
 
     dateOfBirth: { type: Date },

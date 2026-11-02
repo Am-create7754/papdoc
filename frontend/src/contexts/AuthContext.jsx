@@ -38,6 +38,13 @@ export function AuthProvider({ children }) {
     return newUser;
   }, []);
 
+  const loginPatientWithGoogle = useCallback(async (credential) => {
+    const { accessToken, user: loggedInUser } = await authService.loginPatientWithGoogle(credential);
+    setAccessToken(accessToken);
+    setUser(loggedInUser);
+    return loggedInUser;
+  }, []);
+
   const loginDoctor = useCallback(async (payload) => {
     const { accessToken, user: loggedInUser } = await authService.loginDoctor(payload);
     setAccessToken(accessToken);
@@ -57,6 +64,7 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!user,
     loginPatient,
     registerPatient,
+    loginPatientWithGoogle,
     loginDoctor,
     logout,
   };

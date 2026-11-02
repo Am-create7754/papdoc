@@ -2,16 +2,17 @@ const VideoSession = require('../models/VideoSession');
 const VideoDailyCounter = require('../models/VideoDailyCounter');
 const Consultation = require('../models/Consultation');
 const Doctor = require('../models/Doctor');
+const Patient = require('../models/Patient');
 const ApiError = require('../utils/ApiError');
 const { env } = require('../config/env');
 const { consultationReferenceCode } = require('../utils/reference');
 const whatsappService = require('./whatsappService');
 
 // Swappable only for tests (see tests/video.service.test.js) — production always uses the
-// real Twilio-backed implementation.
-let twilioProvider = require('./twilioService');
-function __setTwilioProviderForTests(provider) {
-  twilioProvider = provider || require('./twilioService');
+// real Daily-backed implementation.
+let videoProvider = require('./dailyService');
+function __setVideoProviderForTests(provider) {
+  videoProvider = provider || require('./dailyService');
 }
 
 const CANCELLABLE_STATUSES = ['queued', 'ready'];
@@ -93,7 +94,6 @@ async function assertBookableForOrder(doctor) {
 
 async function notifyDoctorVideoAlertSafely(kind) {
   const messages = {
-    new_paid: 'A patient has paid for a video consultation and joined the queue.',
     patient_ready: 'A patient is ready for their video consultation. Please join within a few minutes.',
     cancelled: 'A patient cancelled their queued video consultation.',
     no_show: 'A patient did not join their video consultation in time.',
@@ -102,6 +102,19 @@ async function notifyDoctorVideoAlertSafely(kind) {
     await whatsappService.sendVideoOperationalAlert(messages[kind] || 'Video consultation update.');
   } catch (err) {
     console.error('Video WhatsApp alert failed:', err.message);
+  }
+}
+
+// The "a paid video consultation is waiting" event gets its own 🔵 templated alert with a CTA
+// button (see whatsappService.sendVideoConsultationAlert) instead of the free-text nudge above —
+// it's the one operational alert the doctor needs to be immediately, unmistakably recognizable.
+async function notifyDoctorVideoPaidAlertSafely(consultation, queuePosition) {
+  try {
+    const patient = await Patient.findById(consultation.patientId);
+    if (!patient) return;
+    await whatsappService.sendVideoConsultationAlert(consultation, patient, queuePosition);
+  } catch (err) {
+    console.error('Video WhatsApp alert (paid) failed:', err.message);
   }
 }
 
@@ -206,10 +219,15 @@ async function createSessionAfterPayment(consultation) {
   const session = await VideoSession.create({ ...baseFields, status: 'queued' });
   console.log('VideoSession queued:', session._id.toString(), 'for consultation', consultation._id.toString());
 
-  await notifyDoctorVideoAlertSafely('new_paid');
+  // Position must be read while the session is still 'queued', before promotion below can flip
+  // it (and anyone ahead of it) to 'ready'.
+  const queuePosition = await computeQueuePosition(session);
+  await notifyDoctorVideoPaidAlertSafely(consultation, queuePosition);
   await promoteNextIfFree(consultation.doctorId);
 
-  return session;
+  // Promotion may have just flipped this session to 'ready' — return the current state, not
+  // the stale 'queued' copy, so the payment response matches what the patient sees next.
+  return (await VideoSession.findById(session._id)) || session;
 }
 
 // --- Ownership -----------------------------------------------------------------------------
@@ -223,7 +241,7 @@ function assertOwnership(session, requester) {
   }
 }
 
-// --- Views (never expose Twilio room SID/name or tokens) -----------------------------------
+// --- Views (never expose the video room's id/name/url or tokens) ---------------------------
 
 async function computeQueuePosition(session) {
   if (session.status !== 'queued') return null;
@@ -281,6 +299,15 @@ async function getMyLatestSession(patientId) {
   await touchAndMaybePromote(session);
   const fresh = await VideoSession.findById(session._id);
   return buildPatientView(fresh);
+}
+
+// Read-only summary for the consultation-detail screen — a consultation has at most one
+// VideoSession (unique index), so this is a simple existence lookup, not new queue/session logic.
+async function getSessionSummaryForConsultation(consultationId, requester) {
+  const session = await VideoSession.findOne({ consultationId });
+  if (!session) return null;
+  assertOwnership(session, requester);
+  return buildPatientView(session);
 }
 
 async function getDoctorQueueView(doctorId) {
@@ -341,20 +368,26 @@ async function issueToken(sessionId, requester) {
     throw new ApiError(409, 'This video session is not currently joinable');
   }
 
-  if (!fresh.twilioRoomSid) {
-    const roomName = twilioProvider.roomNameFor(fresh._id.toString());
-    const room = await twilioProvider.createRoom(roomName);
-    fresh.twilioRoomSid = room.sid;
-    fresh.twilioRoomName = room.uniqueName;
+  if (!fresh.videoRoomId) {
+    const roomName = videoProvider.roomNameFor(fresh._id.toString());
+    const room = await videoProvider.createRoom(roomName);
+    fresh.videoRoomId = room.sid;
+    fresh.videoRoomName = room.uniqueName;
+    fresh.videoRoomUrl = room.url;
     await fresh.save();
-    console.log('Twilio room created for session:', fresh._id.toString());
+    console.log('Video room created for session:', fresh._id.toString());
   }
 
   const identity = requester.role === 'doctor' ? `doctor-${requester.user._id}` : `patient-${requester.user._id}`;
-  const token = twilioProvider.generateAccessToken({ identity, roomName: fresh.twilioRoomName });
+  const token = await videoProvider.generateAccessToken({
+    identity,
+    roomName: fresh.videoRoomName,
+    userName: requester.role === 'doctor' ? requester.user.fullName : requester.user.name,
+    isOwner: requester.role === 'doctor',
+  });
   console.log('Video token issued for session:', fresh._id.toString(), 'role:', requester.role);
 
-  return { token, roomName: fresh.twilioRoomName, identity, sessionStatus: fresh.status };
+  return { token, roomName: fresh.videoRoomName, roomUrl: fresh.videoRoomUrl, identity, sessionStatus: fresh.status };
 }
 
 async function reportJoined(sessionId, requester) {
@@ -398,7 +431,7 @@ async function endSession(sessionId, doctorId) {
   session.status = 'completed';
   session.endedAt = new Date();
   await session.save();
-  await twilioProvider.completeRoom(session.twilioRoomSid);
+  await videoProvider.completeRoom(session.videoRoomName);
   console.log('VideoSession completed by doctor:', session._id.toString());
 
   await promoteNextIfFree(session.doctorId);
@@ -455,11 +488,12 @@ module.exports = {
   promoteNextIfFree,
   getSessionForPatient,
   getMyLatestSession,
+  getSessionSummaryForConsultation,
   getDoctorQueueView,
   issueToken,
   reportJoined,
   endSession,
   cancelSession,
   markNoShow,
-  __setTwilioProviderForTests,
+  __setVideoProviderForTests,
 };

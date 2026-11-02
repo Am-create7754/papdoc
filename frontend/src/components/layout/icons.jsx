@@ -231,10 +231,51 @@ export function UsersIcon({ className }) {
   );
 }
 
+export function SearchIcon({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="M19.5 19.5l-4.3-4.3" />
+    </svg>
+  );
+}
+
 export function CloseIcon({ className }) {
   return (
     <svg viewBox="0 0 24 24" className={className} {...base}>
       <path d="M6 6l12 12M18 6L6 18" />
+    </svg>
+  );
+}
+
+export function PhoneIcon({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <path d="M5 4.5h3.2l1.6 4-2 1.3a10.5 10.5 0 006.4 6.4l1.3-2 4 1.6V19a1.5 1.5 0 01-1.5 1.5A15.5 15.5 0 013.5 6 1.5 1.5 0 015 4.5z" />
+    </svg>
+  );
+}
+
+export function PlusIcon({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+export function ChevronLeftIcon({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <path d="M14.5 6l-6 6 6 6" />
+    </svg>
+  );
+}
+
+export function ChevronRightIcon({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <path d="M9.5 6l6 6-6 6" />
     </svg>
   );
 }

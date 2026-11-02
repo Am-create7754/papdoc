@@ -1,28 +1,143 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { useAuth } from '../../contexts/AuthContext';
 import { fetchPublicDoctorProfile } from '../../services/doctorService';
 import Card from '../ui/Card';
-import Button from '../ui/Button';
 import ResponsiveContainer from '../ui/ResponsiveContainer';
 import Reveal from './Reveal';
 import FloatOnClick from './FloatOnClick';
 import { CardSkeleton } from '../ui/Loader';
-import { MapPinIcon } from '../layout/icons';
+import { CheckCircleIcon, ClockIcon, FileTextIcon, MapPinIcon, MessageIcon, ShieldIcon, VideoIcon } from '../layout/icons';
+import { CLINIC_DIRECTIONS_URL, CLINIC_PHONES, formatPhone } from '../../constants/clinic';
+import { VIDEO_CONSULTATIONS_LIVE } from '../../constants/features';
+import { ComingSoonBadge } from '../ComingSoon';
+import FloatingMotif from './decor/FloatingMotif';
+import { StethoscopeMotif } from './decor/MedicalMotifIcons';
+import RodOfAsclepius from './RodOfAsclepius';
 
 function initials(name) {
   const cleaned = (name || '').trim().replace(/^dr\.?\s+/i, '');
   return (cleaned[0] || 'H').toUpperCase();
 }
 
+const ASSURANCES = [
+  { key: 'assurePersonal', icon: CheckCircleIcon },
+  { key: 'assurePrescription', icon: FileTextIcon },
+  { key: 'assurePrivate', icon: ShieldIcon },
+];
+
+function formatFee(fee) {
+  return `₹${Number(fee).toLocaleString('en-IN')}`;
+}
+
+// Right-hand column of the doctor card: quick facts, how you can consult (with real fees from the
+// doctor's profile) and the physical clinic — so the card reads as complete rather than half-empty.
+function DoctorFactsPanel({ doctor }) {
+  const { t } = useTranslation();
+
+  const options = [
+    doctor.consultationFee > 0 && {
+      key: 'standard',
+      icon: MessageIcon,
+      label: t('consultation.typeStandard'),
+      desc: t('landing.doctor.standardDesc'),
+      fee: doctor.consultationFee,
+    },
+    doctor.priorityConsultationFee > 0 && {
+      key: 'priority',
+      icon: ClockIcon,
+      label: t('consultation.typePriority'),
+      desc: t('landing.doctor.priorityDesc'),
+      fee: doctor.priorityConsultationFee,
+    },
+    doctor.videoConsultationEnabled &&
+      doctor.videoConsultationFee > 0 && {
+        key: 'video',
+        icon: VideoIcon,
+        label: t('consultation.typeVideo'),
+        desc: t('landing.doctor.videoDesc'),
+        fee: doctor.videoConsultationFee,
+        comingSoon: !VIDEO_CONSULTATIONS_LIVE,
+      },
+  ].filter(Boolean);
+
+  const facts = [
+    doctor.yearsOfExperience != null && { value: `${doctor.yearsOfExperience}+`, label: t('landing.doctor.factYears') },
+    doctor.languages?.length > 0 && { value: doctor.languages.length, label: t('landing.doctor.factLanguages') },
+    options.length > 0 && {
+      value: options.filter((o) => !o.comingSoon).length,
+      label: t('landing.doctor.factWays'),
+    },
+  ].filter(Boolean);
+
+  return (
+    <aside className="md:col-span-2 lg:col-span-1 flex flex-col gap-4 lg:border-l lg:border-line lg:pl-8">
+      {facts.length > 0 && (
+        <div className="grid grid-cols-3 gap-2">
+          {facts.map((fact) => (
+            <div key={fact.label} className="rounded-control bg-primary/10 border border-primary/20 px-2 py-3 text-center">
+              <p className="font-display font-bold text-2xl text-primary-light leading-none">{fact.value}</p>
+              <p className="mt-1.5 text-[11px] leading-tight text-ink-muted">{fact.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {options.length > 0 && (
+        <div>
+          <p className="text-xs font-medium text-ink-muted uppercase tracking-wide mb-2">
+            {t('landing.doctor.optionsLabel')}
+          </p>
+          <ul className="divide-y divide-line rounded-control border border-line bg-surface/60">
+            {options.map(({ key, icon: Icon, label, desc, fee, comingSoon }) => (
+              <li key={key} className="flex items-center gap-3 px-3 py-2.5">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/15 text-primary-light shrink-0">
+                  <Icon className="w-4 h-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-ink truncate">{label}</p>
+                  <p className="text-[11px] text-ink-muted truncate">{desc}</p>
+                </div>
+                {comingSoon ? (
+                  <ComingSoonBadge className="shrink-0" />
+                ) : (
+                  <span className="text-sm font-semibold text-primary-light shrink-0">{formatFee(fee)}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="rounded-control border border-line bg-surface/60 p-3.5">
+        <p className="text-xs font-medium text-ink-muted uppercase tracking-wide">{t('landing.doctor.visitLabel')}</p>
+        <p className="mt-1.5 text-sm text-ink leading-snug">{doctor.clinicAddress || doctor.city || doctor.clinicName}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+          <a
+            href={CLINIC_DIRECTIONS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 font-semibold text-primary-light hover:text-primary transition-colors"
+          >
+            <MapPinIcon className="w-4 h-4" />
+            {t('landing.doctor.directions')}
+          </a>
+          <a
+            href={`tel:+91${CLINIC_PHONES[0]}`}
+            className="text-ink-muted hover:text-primary transition-colors"
+          >
+            {formatPhone(CLINIC_PHONES[0])}
+          </a>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
 export default function DoctorTrustSection() {
   const { t } = useTranslation();
-  const { isAuthenticated } = useAuth();
   const [doctor, setDoctor] = useState(null);
   const [error, setError] = useState('');
-  const consultPath = isAuthenticated ? '/patient/consultations/new' : '/register/patient';
 
   useEffect(() => {
     fetchPublicDoctorProfile()
@@ -34,7 +149,24 @@ export default function DoctorTrustSection() {
   }, [t]);
 
   return (
-    <section id="doctor" className="scroll-mt-20 py-16 sm:py-20 lg:py-24">
+    <section id="doctor" className="relative scroll-mt-20 py-16 sm:py-20 lg:py-24">
+      <FloatingMotif
+        icon={StethoscopeMotif}
+        className="hidden lg:block top-6 right-[5%]"
+        size="w-9 h-9"
+        tone="text-primary/20"
+        duration={12}
+      />
+      <FloatingMotif
+        icon={RodOfAsclepius}
+        className="hidden sm:block bottom-2 left-[2%]"
+        size="w-6 h-16"
+        tone="text-primary-light/15"
+        duration={14}
+        delay={300}
+        driftY={8}
+        rotate={2}
+      />
       <ResponsiveContainer>
         <Reveal className="max-w-2xl mb-8 lg:mb-10">
           <svg viewBox="0 0 54 40" className="w-11 h-8 text-primary-light opacity-90" fill="currentColor" aria-hidden="true">
@@ -74,7 +206,7 @@ export default function DoctorTrustSection() {
                 elsewhere on the page — the doctor is the one thing on this page that should
                 never blend in. */}
             <Card className="p-6 sm:p-8 lg:p-10 bg-canvas/70 border-primary/20">
-              <div className="grid md:grid-cols-[auto_1fr] gap-6 md:gap-10">
+              <div className="grid md:grid-cols-[auto_1fr] lg:grid-cols-[auto_1fr_minmax(280px,320px)] gap-6 md:gap-10 lg:gap-8">
                 <div className="flex md:block items-center gap-4">
                   <FloatOnClick rounded="rounded-2xl" className="shrink-0">
                     {doctor.profilePhoto ? (
@@ -156,10 +288,17 @@ export default function DoctorTrustSection() {
                     </div>
                   )}
 
-                  <Link to={consultPath} className="inline-block mt-6">
-                    <Button size="lg">{t('landing.doctor.cta')}</Button>
-                  </Link>
+                  <ul className="mt-6 pt-5 border-t border-line grid sm:grid-cols-3 gap-3">
+                    {ASSURANCES.map(({ key, icon: Icon }) => (
+                      <li key={key} className="flex items-start gap-2.5 text-sm text-ink">
+                        <Icon className="w-4 h-4 text-primary-light shrink-0 mt-0.5" />
+                        <span className="leading-snug">{t(`landing.doctor.${key}`)}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
+
+                <DoctorFactsPanel doctor={doctor} />
               </div>
             </Card>
           </motion.div>

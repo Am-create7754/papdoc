@@ -1,9 +1,28 @@
 import axios from 'axios';
+import i18n from '../i18n';
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
+  // Without a timeout a request on a dropped mobile connection can hang forever with the button
+  // stuck on "Saving...". Uploads override this with a longer limit.
+  timeout: 30000,
+  // ngrok's free tier puts a "you are visiting…" page in front of browser requests; this header
+  // skips it for API calls when the app is opened through an ngrok test URL. No effect elsewhere.
+  headers: window.location.hostname.includes('ngrok') ? { 'ngrok-skip-browser-warning': 'true' } : {},
 });
+
+export const UPLOAD_TIMEOUT_MS = 120000;
+
+// Requests that never reached the server have no `response`. Give them one carrying a readable
+// message so every page's existing `err.response?.data?.message` fallback shows something useful.
+function withNetworkMessage(error) {
+  if (!error.response && !axios.isCancel(error)) {
+    const key = error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT' ? 'errors.timeout' : 'errors.network';
+    error.response = { status: 0, data: { success: false, message: i18n.t(key) } };
+  }
+  return error;
+}
 
 let accessToken = null;
 
@@ -48,7 +67,7 @@ apiClient.interceptors.response.use(
       }
     }
 
-    return Promise.reject(error);
+    return Promise.reject(withNetworkMessage(error));
   }
 );
 

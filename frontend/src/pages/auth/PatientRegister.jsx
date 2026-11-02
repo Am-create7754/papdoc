@@ -8,10 +8,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import AuthLayout from './AuthLayout';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
+import GoogleSignInButton from '../../components/auth/GoogleSignInButton';
 
 export default function PatientRegister() {
   const { t } = useTranslation();
-  const { registerPatient } = useAuth();
+  const { registerPatient, loginPatientWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [serverError, setServerError] = useState('');
 
@@ -45,8 +46,32 @@ export default function PatientRegister() {
     }
   };
 
+  const onGoogleCredential = async (credential) => {
+    setServerError('');
+    try {
+      await loginPatientWithGoogle(credential);
+      navigate('/patient');
+    } catch (err) {
+      setServerError(err.response?.data?.message || t('auth.googleFailed'));
+    }
+  };
+
   return (
-    <AuthLayout title={t('auth.registerTitle')} subtitle={t('auth.registerSubtitle')}>
+    <AuthLayout
+      title={t('auth.registerTitle')}
+      subtitle={t('auth.registerSubtitle')}
+      footer={
+        <>
+          {t('auth.haveAccount')}{' '}
+          <Link
+            to="/login/patient"
+            className="font-semibold text-primary-light underline decoration-primary/40 underline-offset-4 hover:text-primary hover:decoration-primary transition-colors"
+          >
+            {t('auth.loginLink')}
+          </Link>
+        </>
+      }
+    >
       {serverError && (
         <p className="mb-4 text-sm text-danger bg-danger-bg border border-danger/20 rounded-control p-3">
           {serverError}
@@ -86,12 +111,7 @@ export default function PatientRegister() {
           {isSubmitting ? t('auth.creatingAccount') : t('auth.registerButton')}
         </Button>
       </form>
-      <p className="text-sm text-ink-muted mt-6 text-center">
-        {t('auth.haveAccount')}{' '}
-        <Link to="/login/patient" className="text-primary-dark font-medium hover:underline">
-          {t('auth.loginLink')}
-        </Link>
-      </p>
+      <GoogleSignInButton text="signup_with" onCredential={onGoogleCredential} />
     </AuthLayout>
   );
 }

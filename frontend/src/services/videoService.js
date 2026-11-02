@@ -20,6 +20,11 @@ export async function fetchDoctorVideoQueue() {
   return data.data;
 }
 
+export async function fetchVideoSummaryByConsultation(consultationId) {
+  const { data } = await apiClient.get(`/video/by-consultation/${consultationId}`);
+  return data.data;
+}
+
 export async function requestVideoToken(sessionId) {
   const { data } = await apiClient.post(`/video/${sessionId}/token`);
   return data.data;

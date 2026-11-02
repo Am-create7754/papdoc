@@ -1,7 +1,15 @@
-import apiClient from '../api/client';
+import apiClient, { UPLOAD_TIMEOUT_MS } from '../api/client';
 
 export async function createConsultation(formData) {
-  const { data } = await apiClient.post('/consultations', formData);
+  const { data } = await apiClient.post('/consultations', formData, { timeout: UPLOAD_TIMEOUT_MS });
+  return data.data;
+}
+
+// Backend is authoritative for both input safety and video eligibility — this is a lightweight
+// check the wizard calls incrementally for immediate feedback, never a decision the frontend
+// makes on its own. The exact same rules run again, unavoidably, at actual submission time.
+export async function precheckConsultationInput(payload) {
+  const { data } = await apiClient.post('/consultations/precheck', payload);
   return data.data;
 }
 
@@ -22,6 +30,11 @@ export async function fetchDoctorConsultations() {
 
 export async function fetchDoctorConsultationById(id) {
   const { data } = await apiClient.get(`/doctor/consultations/${id}`);
+  return data.data;
+}
+
+export async function submitManualDoctorReply(consultationId, reply) {
+  const { data } = await apiClient.post(`/doctor/consultations/${consultationId}/manual-reply`, { reply });
   return data.data;
 }
 

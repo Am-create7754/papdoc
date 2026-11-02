@@ -43,6 +43,11 @@ const loginPatient = asyncHandler(async (req, res) => {
   sendAuthResponse(res, 200, tokens, user, 'patient');
 });
 
+const loginPatientWithGoogle = asyncHandler(async (req, res) => {
+  const { tokens, patient } = await authService.loginPatientWithGoogle(req.body);
+  sendAuthResponse(res, 200, tokens, patient, 'patient');
+});
+
 const loginDoctor = asyncHandler(async (req, res) => {
   const tokens = await authService.loginDoctor(req.body);
   const user = await Doctor.findOne({ email: req.body.email });
@@ -79,4 +84,4 @@ const me = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { registerPatient, loginPatient, loginDoctor, refresh, logout, me };
+module.exports = { registerPatient, loginPatient, loginPatientWithGoogle, loginDoctor, refresh, logout, me };

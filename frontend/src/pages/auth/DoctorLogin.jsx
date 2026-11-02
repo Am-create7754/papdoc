@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import AuthLayout from './AuthLayout';
@@ -13,6 +13,7 @@ export default function DoctorLogin() {
   const { t } = useTranslation();
   const { loginDoctor } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [serverError, setServerError] = useState('');
 
   const schema = z.object({
@@ -30,7 +31,11 @@ export default function DoctorLogin() {
     setServerError('');
     try {
       await loginDoctor(data);
-      navigate('/doctor');
+      // Only ever return the doctor into their own section of the app — location.state is
+      // same-origin in practice, but this keeps an open-redirect impossible by construction.
+      const from = location.state?.from;
+      const destination = typeof from === 'string' && from.startsWith('/doctor') ? from : '/doctor';
+      navigate(destination, { replace: true });
     } catch (err) {
       setServerError(err.response?.data?.message || 'Login failed');
     }

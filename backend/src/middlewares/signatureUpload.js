@@ -3,8 +3,9 @@ const path = require('path');
 const crypto = require('crypto');
 const fs = require('fs');
 const ApiError = require('../utils/ApiError');
+const { env } = require('../config/env');
 
-const SIGNATURE_DIR = path.join(__dirname, '..', '..', 'uploads', 'signatures');
+const SIGNATURE_DIR = path.join(env.uploadsDir, 'signatures');
 fs.mkdirSync(SIGNATURE_DIR, { recursive: true });
 
 const ALLOWED_MIME_TYPES = {
