@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time setup of a fresh Ubuntu server (Oracle Cloud Always Free) for Healthify.
+# One-time setup of a fresh Ubuntu server (Google Cloud e2-micro / Oracle / any VPS) for Healthify.
 #
 #   sudo bash setup-server.sh <public-hostname> <email-for-https-certificate>
 #
@@ -17,6 +17,12 @@ ENV_FILE=/etc/healthify/env
 
 [ "$(id -u)" -eq 0 ] || { echo "Run with sudo."; exit 1; }
 [ -f "$ENV_FILE" ] || { echo "Missing $ENV_FILE — copy the production env file there first."; exit 1; }
+
+echo "==> Swap (small free-tier VMs have ~1GB RAM; building the frontend needs more)"
+if ! swapon --show | grep -q /swapfile; then
+  fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+  grep -q '^/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
 
 echo "==> System packages"
 export DEBIAN_FRONTEND=noninteractive
@@ -44,9 +50,9 @@ fi
 chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 git config --system --add safe.directory "$APP_DIR"
 
-echo "==> Firewall (Oracle Ubuntu images block 80/443 by default)"
+echo "==> Firewall (some images, e.g. Oracle's, block 80/443 in iptables by default)"
 for port in 80 443; do
-  iptables -C INPUT -p tcp --dport "$port" -j ACCEPT 2>/dev/null || iptables -I INPUT 5 -p tcp --dport "$port" -j ACCEPT
+  iptables -C INPUT -p tcp --dport "$port" -j ACCEPT 2>/dev/null || iptables -I INPUT -p tcp --dport "$port" -j ACCEPT
 done
 netfilter-persistent save
 
